@@ -6,6 +6,14 @@ Cloister is a JavaScript interpreter written in Clojure
 
 This project is not currently in a workable state.
 
+## Building
+Install leiningen from https://github.com/technomancy/leiningen/
+
+Install the leiningen eclipse plugin
+'''bash
+lein plugin install lein-eclipse "1.0.0"
+'''
+
 ## License
 
 Copyright (C) 2011 Tom Denley
