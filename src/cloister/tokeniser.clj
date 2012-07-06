@@ -6,9 +6,11 @@
 (defn- next-token-from [text]
   )
 
-(defn tokenise [text]
-  (loop [tokens [] content text]
-    (let [[token remainder] (next-token-from content)]
-      (if (not token)
-        tokens
-        (recur (conj tokens token) remainder)))))
+(defn tokenise
+  ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
+  ([text prefixes suffixes]
+    (loop [tokens [] content text]
+				    (let [[token remainder] (next-token-from content)]
+				      (if (not token)
+				        tokens
+				        (recur (conj tokens token) remainder))))))
