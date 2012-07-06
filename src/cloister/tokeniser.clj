@@ -14,6 +14,13 @@
         (recur remainder (str name char))
         [(make-token :name name 0 0) remainder]))))
 
+(defn- next-num-from [text]
+  (loop [chars text number-str ""]
+    (let [char (first chars) remainder (rest chars)]
+      (if (num? char)
+        (recur remainder (str number-str char))
+        [(make-token :number (Double/parseDouble number-str) 0 0) remainder]))))
+
 (defn- next-token-from [text]
   (loop [chars text token-string ""]
     (let [char (first chars) remainder (rest chars)]
@@ -21,7 +28,8 @@
         (not char) [nil []]
         (= \space char) (recur remainder token-string)
         (alpha? char) (next-name-from chars)
-        ))))
+        (num? char) (next-num-from chars)
+      ))))
 
 (defn tokenise
   ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
