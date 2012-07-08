@@ -7,19 +7,27 @@
 (defn- make-token [type value from to]
   {:type type :value value :from from :to to})
 
-(defn- next-name-from [text]
-  (loop [chars text name ""]
+(defn- chomp-while [text f?]
+  (loop [chars text value ""]
     (let [char (first chars) remainder (rest chars)]
-      (if (alpha-num? char)
-        (recur remainder (str name char))
-        [(make-token :name name 0 0) remainder]))))
+      (if (f? char)
+        (recur remainder (str value char))
+        [value chars]))))
+
+(defn- next-name-from [text]
+  (let [[name remainder] (chomp-while text alpha-num?)]
+    [(make-token :name name 0 0) remainder]))
+
+(defn- next-int-from [text]
+  (let [[number-str remainder] (chomp-while text num?)]
+    [(make-token :number (Double/parseDouble number-str) 0 0) remainder]))
 
 (defn- next-num-from [text]
-  (loop [chars text number-str ""]
-    (let [char (first chars) remainder (rest chars)]
-      (if (num? char)
-        (recur remainder (str number-str char))
-        [(make-token :number (Double/parseDouble number-str) 0 0) remainder]))))
+  (let [[first-num-str remainder] (chomp-while text num?)]
+    (if (= \. (first remainder))
+      (let [[second-num-str remainder] (chomp-while (rest remainder) num?)]
+        [(make-token :number (Double/parseDouble (str first-num-str "." second-num-str)) 0 0) remainder])
+      [(make-token :number (Double/parseDouble first-num-str) 0 0) remainder])))
 
 (defn- next-token-from [text]
   (loop [chars text token-string ""]
