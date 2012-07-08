@@ -7,12 +7,14 @@
 (defn- make-token [type value from to]
   {:type type :value value :from from :to to})
 
-(defn- chomp-while [text f?]
-  (loop [chars text value ""]
-    (let [char (first chars) remainder (rest chars)]
-      (if (f? char)
-        (recur remainder (str value char))
-        [value chars]))))
+(defn- chomp-while 
+  ([text f?] (chomp-while text "" f?))
+  ([text prefix f?]
+    (loop [chars text value prefix]
+      (let [char (first chars) remainder (rest chars)]
+        (if (f? char)
+          (recur remainder (str value char))
+          [value chars])))))
 
 (defn- next-name-from [text]
   (let [[name remainder] (chomp-while text alpha-num?)]
