@@ -25,14 +25,14 @@
     [(make-token :number (Double/parseDouble number-str) 0 0) remainder]))
 
 (defn- next-num-from [text]
-  (let [[first-num-str r1] (chomp-while text num?)]
-    (if (= \. (first r1))
-      (let [[second-num-str r2] (chomp-while (rest r1) num?)]
-        (if (or (= \e (first r2)) (= \E (first r2)))
-          (let [[exp-num-str r3] (chomp-while (rest r2) num?)]
-            [(make-token :number (Double/parseDouble (str first-num-str "." second-num-str "E" exp-num-str)) 0 0) r3])
-          [(make-token :number (Double/parseDouble (str first-num-str "." second-num-str)) 0 0) r2]))
-      [(make-token :number (Double/parseDouble first-num-str) 0 0) r1])))
+  (let [[num-str remainder] (chomp-while text num?)]
+    (if (= \. (first remainder))
+      (let [[num-str remainder] (chomp-while (rest remainder) (str num-str \.) num?)]
+        (if (or (= \e (first remainder)) (= \E (first remainder)))
+          (let [[num-str remainder] (chomp-while (rest remainder) (str num-str \E) num?)]
+            [(make-token :number (Double/parseDouble num-str) 0 0) remainder])
+          [(make-token :number (Double/parseDouble num-str) 0 0) remainder]))
+      [(make-token :number (Double/parseDouble num-str) 0 0) remainder])))
 
 (defn- next-token-from [text]
   (loop [chars text token-string ""]
