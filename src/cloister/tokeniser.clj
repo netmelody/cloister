@@ -48,21 +48,21 @@
     [(make-token :string string 0 0) (rest remainder)]))
 
 (defn- next-token-from [text]
-  (loop [chars text token-string ""]
-    (let [char (first chars) remainder (rest chars)]
-      (cond
-        (not char) [nil []]
-        (= \space char) (recur remainder token-string)
-        (alpha? char) (next-name-from chars)
-        (num? char) (next-num-from chars)
-        (quote? char) (next-string-from chars)
-      ))))
+  (let [char (first text) remainder (rest text)]
+    (cond
+      (not char) [nil nil]
+      (= \space char) [nil remainder]
+      (alpha? char) (next-name-from text)
+      (num? char) (next-num-from text)
+      (quote? char) (next-string-from text)
+    )))
 
 (defn tokenise
   ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
   ([text prefixes suffixes]
     (loop [tokens [] content text]
-	    (let [[token remainder] (next-token-from content)]
-	      (if (not token)
-	        tokens
-	        (recur (conj tokens token) remainder))))))
+      (let [[token remainder] (next-token-from content)
+            new-tokens (if token (conj tokens token) tokens)]
+        (if remainder
+          (recur new-tokens remainder)
+          new-tokens)))))
