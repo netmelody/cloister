@@ -10,29 +10,29 @@
 (defn- chomp-while 
   ([text f?] (chomp-while text "" f?))
   ([text prefix f?]
-    (loop [chars text value prefix]
+    (loop [chars text, value prefix]
       (let [char (first chars) remainder (rest chars)]
         (if (f? char)
           (recur remainder (str value char))
           [value chars])))))
 
+(defn- chomp-pattern [text pattern]
+  (loop [operations pattern, chars text, value ""]
+    (if-let [operation (first operations)]
+      (let [[prefix operand] ((:when operation) chars)
+            [result remainder] (if operand (chomp-while operand (str value prefix) (:while operation)) [value chars])]
+        (recur (rest operations) remainder result))
+      [value chars])))
+
 (defn- next-name-from [text]
   (let [[name remainder] (chomp-while text alpha-num?)]
     [(make-token :name name 0 0) remainder]))
 
-(defn- next-int-from [text]
-  (let [[number-str remainder] (chomp-while text num?)]
-    [(make-token :number (Double/parseDouble number-str) 0 0) remainder]))
-
 (defn- next-num-from [text]
-  (let [[num-str remainder] (chomp-while text num?)]
-    (if (= \. (first remainder))
-      (let [[num-str remainder] (chomp-while (rest remainder) (str num-str \.) num?)]
-        (if (or (= \e (first remainder)) (= \E (first remainder)))
-          (let [[num-str remainder] (chomp-while (rest remainder) (str num-str \E) num?)]
-            [(make-token :number (Double/parseDouble num-str) 0 0) remainder])
-          [(make-token :number (Double/parseDouble num-str) 0 0) remainder]))
-      [(make-token :number (Double/parseDouble num-str) 0 0) remainder])))
+  (let [[num-str remainder] (chomp-pattern text [{:when #(identity ["" %]) :while num?}
+                                                 {:when #(if (= \. (first %)) [\. (rest %)]) :while num?}
+                                                 {:when #(if (or (= \e (first %)) (= \E (first %))) [\E (rest %)]) :while num?}])]
+    [(make-token :number (Double/parseDouble num-str) 0 0) remainder]))
 
 (defn- next-token-from [text]
   (loop [chars text token-string ""]
