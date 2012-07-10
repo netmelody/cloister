@@ -1,5 +1,7 @@
 (ns cloister.tokeniser)
 
+(defn- error [token message] (println message token))
+
 (def alpha? (set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 (def num? (set "0123456789"))
 (defn- alpha-num? [char] (or (alpha? char) (num? char) (= \_ char)))
@@ -31,8 +33,12 @@
 (defn- next-num-from [text]
   (let [[num-str remainder] (chomp-pattern text [{:when #(identity ["" %]) :while num?}
                                                  {:when #(if (= \. (first %)) [\. (rest %)]) :while num?}
-                                                 {:when #(if (or (= \e (first %)) (= \E (first %))) [\E (rest %)]) :while num?}])]
-    [(make-token :number (Double/parseDouble num-str) 0 0) remainder]))
+                                                 {:when #(if (or (= \e (first %)) (= \E (first %))) [\E (rest %)]) :while num?}])
+        number (try (Double/parseDouble num-str) (catch Exception e))
+        token (make-token :number (or number num-str) 0 0)]
+    (if (or (not number) (alpha? (first remainder)))
+      (error token "Bad number"))
+    [token remainder]))
 
 (defn- next-token-from [text]
   (loop [chars text token-string ""]
