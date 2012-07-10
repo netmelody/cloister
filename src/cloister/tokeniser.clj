@@ -4,7 +4,8 @@
 
 (def alpha? (set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 (def num? (set "0123456789"))
-(def sign? (set "+-"))
+(def sign? #{\+ \-})
+(def quote? #{\" \'})
 (defn- alpha-num? [char] (or (alpha? char) (num? char) (= \_ char)))
 
 (defn- make-token [type value from to]
@@ -41,6 +42,11 @@
       (error token "Bad number"))
     [token remainder]))
 
+(defn- next-string-from [text]
+  (let [quote-char (first text)
+        [string remainder] (chomp-while (rest text) #(not (= % quote-char)))]
+    [(make-token :string string 0 0) (rest remainder)]))
+
 (defn- next-token-from [text]
   (loop [chars text token-string ""]
     (let [char (first chars) remainder (rest chars)]
@@ -49,6 +55,7 @@
         (= \space char) (recur remainder token-string)
         (alpha? char) (next-name-from chars)
         (num? char) (next-num-from chars)
+        (quote? char) (next-string-from chars)
       ))))
 
 (defn tokenise

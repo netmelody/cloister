@@ -40,3 +40,9 @@
     (is (= 1 (count tokens)))
     (is (= :number (:type (first tokens))))
     (is (= 123.125e-15 (:value (first tokens))))))
+
+(deftest tokenises-single-quoted-string
+  (let [tokens (cloister.tokeniser/tokenise " 'foobar' ")]
+    (is (= 1 (count tokens)))
+    (is (= :string (:type (first tokens))))
+    (is (= "foobar" (:value (first tokens))))))
