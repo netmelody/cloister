@@ -4,6 +4,7 @@
 
 (def alpha? (set "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"))
 (def num? (set "0123456789"))
+(def sign? (set "+-"))
 (defn- alpha-num? [char] (or (alpha? char) (num? char) (= \_ char)))
 
 (defn- make-token [type value from to]
@@ -33,7 +34,7 @@
 (defn- next-num-from [text]
   (let [[num-str remainder] (chomp-pattern text [{:when #(identity ["" %]) :while num?}
                                                  {:when #(if (= \. (first %)) [\. (rest %)]) :while num?}
-                                                 {:when #(if (or (= \e (first %)) (= \E (first %))) [\E (rest %)]) :while num?}])
+                                                 {:when #(if (or (= \e (first %)) (= \E (first %))) (chomp-while (rest %) "E" sign?)) :while num?}])
         number (try (Double/parseDouble num-str) (catch Exception e))
         token (make-token :number (or number num-str) 0 0)]
     (if (or (not number) (alpha? (first remainder)))

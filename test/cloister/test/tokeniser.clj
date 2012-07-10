@@ -34,3 +34,9 @@
     (is (= 1 (count tokens)))
     (is (= :number (:type (first tokens))))
     (is (= 123.125e15 (:value (first tokens))))))
+
+(deftest tokenises-positive-fractional-number-with-negative-exponent-to-number
+  (let [tokens (cloister.tokeniser/tokenise " 123.125E-15 ")]
+    (is (= 1 (count tokens)))
+    (is (= :number (:type (first tokens))))
+    (is (= 123.125e-15 (:value (first tokens))))))
