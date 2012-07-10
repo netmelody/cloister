@@ -42,10 +42,20 @@
       (error token "Bad number"))
     [token remainder]))
 
+(def escape-chars {\b \backspace \f \formfeed \n \newline \r \return \t \tab})
+
 (defn- next-string-from [text]
   (let [quote-char (first text)
-        [string remainder] (chomp-while (rest text) #(not (= % quote-char)))]
-    [(make-token :string string 0 0) (rest remainder)]))
+        string-char? #(not (#{quote-char \\ \newline \return} %))]
+    (loop [chars (rest text) value ""]
+      (let [[string remainder] (chomp-while chars string-char?)
+            char (first remainder) xs (rest remainder)]
+        (cond
+          (= quote-char char) [(make-token :string string 0 0) (rest remainder)]
+          (or (nil? char) (#{\n \r nil} char)) (error (make-token :string string 0 0) "Unterminated string")
+          (= \\ char) (let [escaped-char (first xs)
+                            [escape-char r] (if (= \u escaped-char) [(str (take 4 xs)) (drop 4 xs)] [(escape-chars escaped-char) (rest xs)])]
+                        (recur r (str value escape-char))))))))
 
 (defn- next-token-from [text]
   (let [char (first text) remainder (rest text)]
