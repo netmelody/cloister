@@ -56,7 +56,7 @@
     (is (= "foobar" (:value (first tokens))))))
 
 (deftest tokenises-string-with-escaped-chars
-  (let [tokens (cloister.tokeniser/tokenise " 'f\toobar' ")]
+  (let [tokens (cloister.tokeniser/tokenise " 'f\\toobar' ")]
     (is (= 1 (count tokens)))
     (is (= :string (:type (first tokens))))
     (is (= "f\toobar" (:value (first tokens))))))

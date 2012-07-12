@@ -1,4 +1,5 @@
-(ns cloister.tokeniser)
+(ns cloister.tokeniser
+  (:require clojure.set))
 
 (defn- error [token message] (println message token))
 
@@ -6,7 +7,10 @@
 (def num? (set "0123456789"))
 (def sign? #{\+ \-})
 (def quote? #{\" \'})
-(defn- alpha-num? [char] (or (alpha? char) (num? char) (= \_ char)))
+(def line-break? #{\newline \return})
+(def alpha-num? (clojure.set/union alpha? num? #{\_}))
+
+(def escape-char-mapping {\b \backspace, \f \formfeed, \n \newline, \r \return, \t \tab})
 
 (defn- make-token [type value from to]
   {:type type :value value :from from :to to})
@@ -42,20 +46,18 @@
       (error token "Bad number"))
     [token remainder]))
 
-(def escape-chars {\b \backspace \f \formfeed \n \newline \r \return \t \tab})
-
 (defn- next-string-from [text]
   (let [quote-char (first text)
         string-char? #(not (#{quote-char \\ \newline \return} %))]
     (loop [chars (rest text) value ""]
-      (let [[string remainder] (chomp-while chars string-char?)
+      (let [[string remainder] (chomp-while chars value string-char?)
             char (first remainder) xs (rest remainder)]
         (cond
           (= quote-char char) [(make-token :string string 0 0) (rest remainder)]
           (or (nil? char) (#{\n \r nil} char)) (error (make-token :string string 0 0) "Unterminated string")
           (= \\ char) (let [escaped-char (first xs)
-                            [escape-char r] (if (= \u escaped-char) [(str (take 4 xs)) (drop 4 xs)] [(escape-chars escaped-char) (rest xs)])]
-                        (recur r (str value escape-char))))))))
+                            [escape-char r] (if (= \u escaped-char) [(str (take 4 xs)) (drop 4 xs)] [(escape-char-mapping escaped-char) (rest xs)])]
+                        (recur r (str string escape-char))))))))
 
 (defn- next-token-from [text]
   (let [char (first text) remainder (rest text)]
@@ -65,7 +67,7 @@
       (alpha? char) (next-name-from text)
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
-      (and (= \/ char) (= \/ (first remainder))) [nil (rest (drop-while #(not (#{\newline \return} %)) remainder))])))
+      (and (= \/ char) (= \/ (first remainder))) [nil (rest (drop-while #(not (line-break? %)) remainder))])))
 
 (defn tokenise
   ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
