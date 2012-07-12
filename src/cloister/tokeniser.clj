@@ -65,7 +65,7 @@
       (alpha? char) (next-name-from text)
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
-    )))
+      (and (= \/ char) (= \/ (first remainder))) [nil (rest (drop-while #(not (#{\newline \return} %)) remainder))])))
 
 (defn tokenise
   ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))

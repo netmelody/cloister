@@ -17,6 +17,14 @@
     (is (= :name (:type (first tokens))))
     (is (= "foo" (:value (first tokens))))))
 
+(deftest tokenises-two-words-to-names
+  (let [tokens (cloister.tokeniser/tokenise " foo   bar ")]
+    (is (= 2 (count tokens)))
+    (is (= :name (:type (first tokens))))
+    (is (= "foo" (:value (first tokens))))
+    (is (= :name (:type (first (rest tokens)))))
+    (is (= "bar" (:value (first (rest tokens)))))))
+
 (deftest tokenises-positive-whole-number-to-number
   (let [tokens (cloister.tokeniser/tokenise " 123 ")]
     (is (= 1 (count tokens)))
@@ -52,3 +60,11 @@
     (is (= 1 (count tokens)))
     (is (= :string (:type (first tokens))))
     (is (= "f\toobar" (:value (first tokens))))))
+
+(deftest ignores-comments
+  (let [tokens (cloister.tokeniser/tokenise (str " woo //wonderful \n foo "))]
+    (is (= 2 (count tokens)))
+    (is (= :name (:type (first tokens))))
+    (is (= "woo" (:value (first tokens))))
+    (is (= :name (:type (first (rest tokens)))))
+    (is (= "foo" (:value (first (rest tokens)))))))
