@@ -15,14 +15,14 @@
 (defn- make-token [type value from to]
   {:type type :value value :from from :to to})
 
-(defn- chomp-while 
+(defn- chomp-while
   ([text f?] (chomp-while text "" f?))
   ([text prefix f?]
     (loop [chars text, value prefix]
       (let [char (first chars) remainder (rest chars)]
         (if (f? char)
           (recur remainder (str value char))
-          [value chars])))))
+          [(str value) chars])))))
 
 (defn- chomp-pattern [text pattern]
   (loop [operations pattern, chars text, value ""]
@@ -34,7 +34,7 @@
 
 (defn- next-name-from [text]
   (let [[name remainder] (chomp-while text alpha-num?)]
-    [(make-token :name name 0 0) remainder]))
+    [(make-token :name name 0 0) remainder (.length name)]))
 
 (defn- next-num-from [text]
   (let [[num-str remainder] (chomp-pattern text [{:when #(identity ["" %]) :while num?}
@@ -44,7 +44,7 @@
         token (make-token :number (or number num-str) 0 0)]
     (if (or (not number) (alpha? (first remainder)))
       (error token "Bad number"))
-    [token remainder]))
+    [token remainder (.length num-str)]))
 
 (defn- next-string-from [text]
   (let [quote-char (first text)
@@ -53,25 +53,26 @@
       (let [[string remainder] (chomp-while chars value string-char?)
             char (first remainder) xs (rest remainder)]
         (cond
-          (= quote-char char) [(make-token :string string 0 0) (rest remainder)]
+          (= quote-char char) [(make-token :string string 0 0) (rest remainder) (.length string)]
           (or (nil? char) (#{\n \r nil} char)) (error (make-token :string string 0 0) "Unterminated string")
           (= \\ char) (let [escaped-char (first xs)
                             [escape-char r] (if (= \u escaped-char) [(str (take 4 xs)) (drop 4 xs)] [(escape-char-mapping escaped-char) (rest xs)])]
                         (recur r (str string escape-char))))))))
 
 (defn- next-comment-from [text]
-  [nil (rest (drop-while #(not (line-break? %)) text))])
+  (let [[comment xs] (chomp-while text #(not (line-break? %)))]
+    [nil (rest xs) (.length comment)]))
 
 (defn- next-operator-from [text prefix? suffix?]
   (let [char (first text) remainder (rest text)
         [token-str xs] (if (prefix? char) (chomp-while remainder char suffix?) [(str char) remainder])]
-    [(make-token :operator token-str 0 0) xs]))
+    [(make-token :operator token-str 0 0) xs (.length token-str)]))
 
 (defn- next-token-from [text prefix? suffix?]
   (let [char (first text) remainder (rest text)]
     (cond
-      (not char) [nil nil]
-      (= \space char) [nil remainder]
+      (not char) [nil nil 0]
+      (= \space char) [nil remainder 1]
       (alpha? char) (next-name-from text)
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
@@ -81,10 +82,10 @@
 (defn tokenise
   ([text] (tokenise text #{\< \> \+ \- \&} #{\= \> \& \:}))
   ([text prefixes suffixes]
-    (loop [tokens [] content text]
-      (let [[token remainder] (next-token-from content prefixes suffixes)
+    (loop [tokens [], content text, index 0]
+      (let [[token remainder consumed] (next-token-from content prefixes suffixes)
             new-tokens (if token (conj tokens token) tokens)]
         (if remainder
-          (recur new-tokens remainder)
+          (recur new-tokens remainder (+ index consumed))
           new-tokens)))))
 
