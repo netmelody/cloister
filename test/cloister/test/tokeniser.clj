@@ -68,3 +68,4 @@
     (is (= "woo" (:value (first tokens))))
     (is (= :name (:type (first (rest tokens)))))
     (is (= "foo" (:value (first (rest tokens)))))))
+
