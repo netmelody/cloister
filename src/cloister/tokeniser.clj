@@ -70,7 +70,7 @@
       (alpha? char) (next-name-from text)
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
-      (= [\\ \\] (take 2 text)) (next-comment-from text))))
+      (= (seq "//") (take 2 text)) (next-comment-from text))))
 
 (defn tokenise
   ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
