@@ -60,7 +60,7 @@
                         (recur r (str string escape-char))))))))
 
 (defn- next-comment-from [text]
-  [nil (rest (drop-while #(not (line-break? %)) remainder))])
+  [nil (rest (drop-while #(not (line-break? %)) text))])
 
 (defn- next-token-from [text]
   (let [char (first text) remainder (rest text)]
