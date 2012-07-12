@@ -62,7 +62,12 @@
 (defn- next-comment-from [text]
   [nil (rest (drop-while #(not (line-break? %)) text))])
 
-(defn- next-token-from [text]
+(defn- next-operator-from [text prefix? suffix?]
+  (let [char (first text) remainder (rest text)
+        [token-str xs] (if (prefix? char) (chomp-while remainder char suffix?) [(str char) remainder])]
+    [(make-token :operator token-str 0 0) xs]))
+
+(defn- next-token-from [text prefix? suffix?]
   (let [char (first text) remainder (rest text)]
     (cond
       (not char) [nil nil]
@@ -70,14 +75,16 @@
       (alpha? char) (next-name-from text)
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
-      (= (seq "//") (take 2 text)) (next-comment-from text))))
+      (= (seq "//") (take 2 text)) (next-comment-from text)
+      true (next-operator-from text prefix? suffix?))))
 
 (defn tokenise
-  ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
+  ([text] (tokenise text #{\< \> \+ \- \&} #{\= \> \& \:}))
   ([text prefixes suffixes]
     (loop [tokens [] content text]
-      (let [[token remainder] (next-token-from content)
+      (let [[token remainder] (next-token-from content prefixes suffixes)
             new-tokens (if token (conj tokens token) tokens)]
         (if remainder
           (recur new-tokens remainder)
           new-tokens)))))
+
