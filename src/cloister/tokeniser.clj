@@ -20,7 +20,7 @@
   ([text prefix f?]
     (loop [chars text, value prefix]
       (let [char (first chars) remainder (rest chars)]
-        (if (f? char)
+        (if (and (not (nil? char)) (f? char))
           (recur remainder (str value char))
           [(str value) chars])))))
 
@@ -49,15 +49,15 @@
 (defn- next-string-from [text]
   (let [quote-char (first text)
         string-char? #(not (#{quote-char \\ \newline \return} %))]
-    (loop [chars (rest text) value ""]
+    (loop [chars (rest text) value "" extra-len 2]
       (let [[string remainder] (chomp-while chars value string-char?)
             char (first remainder) xs (rest remainder)]
         (cond
-          (= quote-char char) [(make-token :string string) (rest remainder) (.length string)]
+          (= quote-char char) [(make-token :string string) (rest remainder) (+ extra-len (.length string))]
           (or (nil? char) (#{\n \r nil} char)) (error (make-token :string string) "Unterminated string")
           (= \\ char) (let [escaped-char (first xs)
                             [escape-char r] (if (= \u escaped-char) [(str (take 4 xs)) (drop 4 xs)] [(escape-char-mapping escaped-char) (rest xs)])]
-                        (recur r (str string escape-char))))))))
+                        (recur r (str string escape-char) (+ extra-len 1))))))))
 
 (defn- next-comment-from [text]
   (let [[comment xs] (chomp-while text #(not (line-break? %)))]
