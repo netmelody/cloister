@@ -59,6 +59,9 @@
                             [escape-char r] (if (= \u escaped-char) [(str (take 4 xs)) (drop 4 xs)] [(escape-char-mapping escaped-char) (rest xs)])]
                         (recur r (str string escape-char))))))))
 
+(defn- next-comment-from [text]
+  [nil (rest (drop-while #(not (line-break? %)) remainder))])
+
 (defn- next-token-from [text]
   (let [char (first text) remainder (rest text)]
     (cond
@@ -67,7 +70,7 @@
       (alpha? char) (next-name-from text)
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
-      (and (= \/ char) (= \/ (first remainder))) [nil (rest (drop-while #(not (line-break? %)) remainder))])))
+      (= [\\ \\] (take 2 text)) (next-comment-from text))))
 
 (defn tokenise
   ([text] (tokenise text #{"<" ">" "+" "-" "&"} #{"=" ">" "&" ":"}))
