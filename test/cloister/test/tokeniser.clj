@@ -69,3 +69,41 @@
     (is (= :name (:type (first (rest tokens)))))
     (is (= "foo" (:value (first (rest tokens)))))))
 
+(deftest tokenises-composite-operators
+  (let [tokens (cloister.tokeniser/tokenise " <= ")]
+    (is (= 1 (count tokens)))
+    (is (= :operator (:type (first tokens))))
+    (is (= "<=" (:value (first tokens))))))
+
+(deftest tokenises-single-operators
+  (let [tokens (cloister.tokeniser/tokenise " ( ")]
+    (is (= 1 (count tokens)))
+    (is (= :operator (:type (first tokens))))
+    (is (= "(" (:value (first tokens))))))
+
+(deftest tokenises-demonstrative-syntax
+  (let [tokens (cloister.tokeniser/tokenise "(function() { cnt=-12.25e-14; alert(\"f\\too\" <= 'ba\\nr'); }()) //go")]
+    (is (= 21 (count tokens)))
+    (let [expected [{:type :operator :value "(" :from 0 :to 1}
+                    {:type :name :value "function" :from 1 :to 9}
+                    {:type :operator :value "(" :from 9 :to 10}
+                    {:type :operator :value ")" :from 10 :to 11}
+                    {:type :operator :value "{" :from 12 :to 13}
+                    {:type :name :value "cnt" :from 14 :to 17}
+                    {:type :operator :value "=" :from 17 :to 18}
+                    {:type :operator :value "-" :from 18 :to 19}
+                    {:type :number :value 1.225E-13 :from 19 :to 28}
+                    {:type :operator :value ";" :from 28 :to 29}
+                    {:type :name :value "alert" :from 30 :to 35}
+                    {:type :operator :value "(" :from 35 :to 36}
+                    {:type :string :value "f\too" :from 36 :to 43}
+                    {:type :operator :value "<=" :from 44 :to 46}
+                    {:type :string :value "ba\nr" :from 47 :to 54}
+                    {:type :operator :value ")" :from 54 :to 55}
+                    {:type :operator :value ";" :from 55 :to 56}
+                    {:type :operator :value "}" :from 57 :to 58}
+                    {:type :operator :value "(" :from 58 :to 59}
+                    {:type :operator :value ")" :from 59 :to 60}
+                    {:type :operator :value ")" :from 60 :to 61}]]
+      (is (= expected tokens)))))
+
