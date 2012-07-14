@@ -80,7 +80,7 @@
       true (next-operator-from text prefix? suffix?))))
 
 (defn tokenise
-  ([text] (tokenise text #{\< \> \+ \- \&} #{\= \> \& \:}))
+  ([text] (tokenise text #{\= \< \> \! \+ \- \* \& \| \/ \% \^ \'} #{\= \< \> \& \|}))
   ([text prefixes suffixes]
     (loop [tokens [], content text, index 0]
       (let [[token remainder consumed] (next-token-from content prefixes suffixes)
