@@ -26,13 +26,25 @@
 
 (defn make-symbol
   ([id] (make-symbol id 0))
-  ([id binding-power] assoc symbol-proto :id id :value id :left-binding-power binding-power))
+  ([id binding-power] (assoc symbol-proto :id id :value id :left-binding-power binding-power)))
 
 (defn register-symbol [table symbol]
   (let [id (:id symbol)]
     (if-let [existing-symbol (table id)]
-      (assoc table id (assoc existing-symbol :left-binding-power (max binding-power (:left-binding-power existing-symbol))))
+      (assoc table id (assoc existing-symbol :left-binding-power (max (:left-binding-power symbol) (:left-binding-power existing-symbol))))
       (assoc table id symbol))))
+
+(def symbol-table (-> {}
+                    (register-symbol (make-symbol :end))
+                    (register-symbol (make-symbol :name))
+                    (register-symbol (make-symbol ":"))
+                    (register-symbol (make-symbol ";"))
+                    (register-symbol (make-symbol ")"))
+                    (register-symbol (make-symbol "]"))
+                    (register-symbol (make-symbol "}"))
+                    (register-symbol (make-symbol ","))
+                    (register-symbol (make-symbol "else"))
+                    ))
 
 (defn scope-define [scope token]
   (let [name (:value token)
@@ -47,7 +59,7 @@
     (if s
       (if-let [definition ((:definitions s) name)]
         definition
-        (recur (:parent s) name))
+        (recur (:parent s)))
       nil)))
 
 (defn scope-reserve [scope definition]
