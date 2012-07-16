@@ -5,7 +5,7 @@
 (def symbol-proto
   {:id nil
    :value nil
-   :null-denotation (fn [] (error "Undefined."))
+   :null-denotation (fn [scope] (error "Undefined."))
    :left-denotation (fn [left] (error "Missing operator."))
    :statement-denotation (fn [] (error "Undefined."))
    :left-binding-power 0
@@ -28,6 +28,9 @@
   ([id] (make-symbol id 0))
   ([id binding-power] (assoc symbol-proto :id id :value id :left-binding-power binding-power)))
 
+(defn make-constant [name value]
+  (assoc (make-symbol name) :value value))
+
 (defn register-symbol [table symbol]
   (let [id (:id symbol)]
     (if-let [existing-symbol (table id)]
@@ -37,6 +40,7 @@
 (def symbol-table (-> {}
                     (register-symbol (make-symbol :end))
                     (register-symbol (make-symbol :name))
+                    (register-symbol (make-symbol :literal))
                     (register-symbol (make-symbol ":"))
                     (register-symbol (make-symbol ";"))
                     (register-symbol (make-symbol ")"))
@@ -44,6 +48,12 @@
                     (register-symbol (make-symbol "}"))
                     (register-symbol (make-symbol ","))
                     (register-symbol (make-symbol "else"))
+                    (register-symbol (make-constant "true" true))
+                    (register-symbol (make-constant "false" false))
+                    (register-symbol (make-constant "null" nil))
+                    (register-symbol (make-constant "pi" (double 3.141592653589793)))
+                    (register-symbol (make-constant "Object" {}))
+                    (register-symbol (make-constant "Array" []))
                     ))
 
 (defn scope-define [scope token]
