@@ -42,7 +42,30 @@
       (let [definition (assoc (merge token definition-proto) :scope scope)]
         (assoc scope :definitions (assoc defs name definition))))))
 
+(defn scope-find [scope name]
+  (loop [s scope]
+    (if s
+      (if-let [definition ((:definitions s) name)]
+        definition
+        (recur (:parent s) name))
+      nil)))
+
+(defn scope-reserve [scope definition]
+  (let [name (:value definition)
+        defs (:definitions scope)]
+    (assoc scope :definitions (assoc defs name (assoc definition :reserved true)))))
+
+(defn scope-create-child [scope]
+  (assoc scope-proto :parent scope))
+
+(defn deal-with [token]
+  )
+
 (defn parse [tokens]
+  (loop [t tokens]
+    (deal-with (first t))
+    (recur (rest t)))
+  
   (println "parsed")
   {})
 
