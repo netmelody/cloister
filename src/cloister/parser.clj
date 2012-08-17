@@ -84,11 +84,12 @@
   )
 
 (defn parse [tokens]
-  (loop [t tokens]
-    (deal-with (first t))
-    (recur (rest t)))
-  
-  (println "parsed")
-  {})
-
-
+  (let [scope scope-proto
+        symbol-table {}
+        token nil
+        token_nr 0]
+    
+    (advance symbol-table scope tokens token token_nr)
+    
+    (println "parsed")
+    {}))
