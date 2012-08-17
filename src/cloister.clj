@@ -1,7 +1,9 @@
 (ns cloister
   "javascript interpreter in clojure"
-  (:use [clojure.string :only [replace] :rename {replace re-replace}]) 
-  (:import [java.net DatagramPacket DatagramSocket])
-  (:import [java.util.concurrent Executors LinkedBlockingQueue TimeUnit]))
+  (:require [cloister.tokeniser])
+  (:require [cloister.parser])
+  )
 
+(cloister.parser/parse
+  (cloister.tokeniser/tokenise "(function() { cnt=-12.25e-14; alert(\"f\\too\" <= 'ba\\nr'); }()) //go"))
 
