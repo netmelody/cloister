@@ -80,7 +80,20 @@
 (defn scope-create-child [scope]
   (assoc scope-proto :parent scope))
 
-(defn deal-with [token]
+(defn advance 
+  ([symbol-table scope tokens token_nr expected-token-type])
+  ([symbol-table scope tokens token_nr]
+    (if (> token_nr (size tokens))
+      (:end symbol_table)
+      (advance symbol-table scope tokens (tokens token_nr))))
+  ([symbol-table scope tokens token]
+    (let [a (:type token)]
+      (cond
+        (= :name a) (scope-find scope (:value token))
+        (= :operator a) (symbol-find (:value token))
+        (= :string a) (symbol-find :literal)
+        (= :number a) (symbol-find :literal)
+        true (error "Unexpected token"))))
   )
 
 (defn parse [tokens]
