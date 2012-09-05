@@ -79,21 +79,24 @@
 (defn scope-create-child [scope]
   (assoc scope-proto :parent scope))
 
-(defn symbol-find [symbol-type])
+(defn symbol-find [symbol-table symbol-id]
+  (symbol-table symbol-id))
 
 (defn advance 
   ([symbol-table scope tokens token-nr]
     (if (> token-nr (count tokens))
-      (:end symbol-table)
+      (symbol-find symbol-table :end)
       (advance symbol-table scope tokens token-nr (tokens token-nr))))
   ([symbol-table scope tokens token-nr token]
-    (let [a (:type token)]
-      (cond
-        (= :name a) (scope-find scope (:value token))
-        (= :operator a) (symbol-find (:value token))
-        (= :string a) (symbol-find :literal)
-        (= :number a) (symbol-find :literal)
-        true (error "Unexpected token"))))
+    (let [type (:type token)]
+      (if-let [base (cond
+                      (= :name type) (scope-find scope (:value token))
+                      (= :operator type) (symbol-find symbol-table (:value token))
+                      (= :string type) (symbol-find symbol-table :literal)
+                      (= :number type) (symbol-find symbol-table :literal)
+                      true nil)]
+        (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:arity token))
+        (error "Unexpected token"))))
   )
 
 (defn parse [tokens]
