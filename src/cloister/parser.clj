@@ -83,17 +83,17 @@
   (symbol-table symbol-id))
 
 (defn advance 
-  ([symbol-table scope tokens token-nr]
-    (if (> token-nr (count tokens))
-      (symbol-find symbol-table :end)
-      (advance symbol-table scope tokens token-nr (tokens token-nr))))
-  ([symbol-table scope tokens token-nr token]
+  ([world token-nr]
+    (if (> token-nr (count (:tokens world)))
+      (symbol-find (:symbol-table world) :end)
+      (advance world token-nr ((:tokens world) token-nr))))
+  ([world token-nr token]
     (let [type (:type token)]
       (if-let [base (cond
-                      (= :name type) (scope-find scope (:value token))
-                      (= :operator type) (symbol-find symbol-table (:value token))
-                      (= :string type) (symbol-find symbol-table :literal)
-                      (= :number type) (symbol-find symbol-table :literal)
+                      (= :name type) (scope-find (:scope world) (:value token))
+                      (= :operator type) (symbol-find (:symbol-table world) (:value token))
+                      (= :string type) (symbol-find (:symbol-table world) :literal)
+                      (= :number type) (symbol-find (:symbol-table world) :literal)
                       true nil)]
         (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:arity token))
         (error "Unexpected token"))))
@@ -110,12 +110,13 @@
         statements))))
 
 (defn parse [tokens]
-  (let [scope scope-proto
-        symbol-table base-symbol-table
+  (let [world {:scope scope-proto
+               :symbol-table base-symbol-table
+               :tokens tokens}
         token nil
         token-nr 0]
     
-    (advance symbol-table scope tokens token token-nr)
+    (advance world token token-nr)
     
     (println "parsed")
     {}))
