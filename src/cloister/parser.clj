@@ -37,24 +37,23 @@
       (assoc table id (assoc existing-symbol :left-binding-power (max (:left-binding-power symbol) (:left-binding-power existing-symbol))))
       (assoc table id symbol))))
 
-(def symbol-table (-> {}
-                    (register-symbol (make-symbol :end))
-                    (register-symbol (make-symbol :name))
-                    (register-symbol (make-symbol :literal))
-                    (register-symbol (make-symbol ":"))
-                    (register-symbol (make-symbol ";"))
-                    (register-symbol (make-symbol ")"))
-                    (register-symbol (make-symbol "]"))
-                    (register-symbol (make-symbol "}"))
-                    (register-symbol (make-symbol ","))
-                    (register-symbol (make-symbol "else"))
-                    (register-symbol (make-constant "true" true))
-                    (register-symbol (make-constant "false" false))
-                    (register-symbol (make-constant "null" nil))
-                    (register-symbol (make-constant "pi" (double 3.141592653589793)))
-                    (register-symbol (make-constant "Object" {}))
-                    (register-symbol (make-constant "Array" []))
-                    ))
+(def base-symbol-table (-> {}
+                         (register-symbol (make-symbol :end))
+                         (register-symbol (make-symbol :name))
+                         (register-symbol (make-symbol :literal))
+                         (register-symbol (make-symbol ":"))
+                         (register-symbol (make-symbol ";"))
+                         (register-symbol (make-symbol ")"))
+                         (register-symbol (make-symbol "]"))
+                         (register-symbol (make-symbol "}"))
+                         (register-symbol (make-symbol ","))
+                         (register-symbol (make-symbol "else"))
+                         (register-symbol (make-constant "true" true))
+                         (register-symbol (make-constant "false" false))
+                         (register-symbol (make-constant "null" nil))
+                         (register-symbol (make-constant "pi" (double 3.141592653589793)))
+                         (register-symbol (make-constant "Object" {}))
+                         (register-symbol (make-constant "Array" []))))
 
 (defn scope-define [scope token]
   (let [name (:value token)
@@ -80,13 +79,14 @@
 (defn scope-create-child [scope]
   (assoc scope-proto :parent scope))
 
+(defn symbol-find [symbol-type])
+
 (defn advance 
-  ([symbol-table scope tokens token_nr expected-token-type])
-  ([symbol-table scope tokens token_nr]
-    (if (> token_nr (size tokens))
-      (:end symbol_table)
-      (advance symbol-table scope tokens (tokens token_nr))))
-  ([symbol-table scope tokens token]
+  ([symbol-table scope tokens token-nr]
+    (if (> token-nr (count tokens))
+      (:end symbol-table)
+      (advance symbol-table scope tokens token-nr (tokens token-nr))))
+  ([symbol-table scope tokens token-nr token]
     (let [a (:type token)]
       (cond
         (= :name a) (scope-find scope (:value token))
@@ -98,11 +98,11 @@
 
 (defn parse [tokens]
   (let [scope scope-proto
-        symbol-table {}
+        symbol-table base-symbol-table
         token nil
-        token_nr 0]
+        token-nr 0]
     
-    (advance symbol-table scope tokens token token_nr)
+    (advance symbol-table scope tokens token token-nr)
     
     (println "parsed")
     {}))
