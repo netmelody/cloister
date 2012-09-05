@@ -99,6 +99,16 @@
         (error "Unexpected token"))))
   )
 
+(defn extract-statement [token])
+
+(defn extract-statements [token]
+  (loop [statements []]
+    (if (or (= :end (:id token)) (= "{" (:id token)))
+      statements
+      (if-let [statement (extract-statement token)]
+        (recur (conj statements statement))
+        statements))))
+
 (defn parse [tokens]
   (let [scope scope-proto
         symbol-table base-symbol-table
