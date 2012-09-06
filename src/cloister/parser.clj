@@ -82,22 +82,24 @@
 (defn symbol-find [symbol-table symbol-id]
   (symbol-table symbol-id))
 
-(defn advance 
-  ([world token-nr]
-    (if (> token-nr (count (:tokens world)))
-      (symbol-find (:symbol-table world) :end)
-      (advance world token-nr ((:tokens world) token-nr))))
-  ([world token-nr token]
-    (let [type (:type token)]
+(defn next-token [tokens]
+  (if tokens
+    (let [token (first tokens)]
       (if-let [base (cond
-                      (= :name type) (scope-find (:scope world) (:value token))
-                      (= :operator type) (symbol-find (:symbol-table world) (:value token))
-                      (= :string type) (symbol-find (:symbol-table world) :literal)
-                      (= :number type) (symbol-find (:symbol-table world) :literal)
+                      (= :name     (:type token)) (scope-find (:scope world) (:value token))
+                      (= :operator (:type token)) (symbol-find (:symbol-table world) (:value token))
+                      (= :string   (:type token)) (symbol-find (:symbol-table world) :literal)
+                      (= :number   (:type token)) (symbol-find (:symbol-table world) :literal)
                       true nil)]
         (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:arity token))
-        (error "Unexpected token"))))
-  )
+        (error "Unexpected token")))
+      (symbol-find (:symbol-table world) :end)))
+
+(defn advance 
+  ([world] (advance world nil))
+  ([world expected-token-id]
+    (let [token (next-token (:tokens world))]
+      (assoc world :tokens (rest tokens) :token token))))
 
 (defn extract-statement [token])
 
