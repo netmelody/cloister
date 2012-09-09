@@ -42,7 +42,16 @@
   ([id binding-power left-denotation] (make-offset-infix id binding-power -1 left-denotation)))
 
 (defn make-assignment [id]
-  (make-infixr id 10 (fn [world left] )))
+  (assoc (make-symbol id 10) :left-denotation (fn [world left]
+                                                (let [[new-world expr] (extract-expression world 9)
+                                                      infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary :assignment true)]
+                                                  [new-world infix]))))
+
+(defn make-prefix
+  ([id] (make-prefix id (fn [world] (let [[new-world expr] (extract-expression world 70)
+                                          prefix (assoc ((:symbol-table world) id) :first expr :arity :unary)]
+                                      [(assoc new-world :scope (scope-reserve (:scope new-world) prefix)) prefix]))))
+  ([id nud] (assoc (make-symbol id) :null-denotation nud)))
 
 (defn register-symbol [table symbol]
   (let [id (:id symbol)]
