@@ -82,8 +82,8 @@
 (defn symbol-find [symbol-table symbol-id]
   (symbol-table symbol-id))
 
-(defn next-token [tokens]
-  (if tokens
+(defn next-token [world]
+  (if-let [tokens (:tokens world)]
     (let [token (first tokens)]
       (if-let [base (cond
                       (= :name     (:type token)) (scope-find (:scope world) (:value token))
@@ -98,18 +98,30 @@
 (defn advance 
   ([world] (advance world nil))
   ([world expected-token-id]
-    (let [token (next-token (:tokens world))]
+    ;TODO: checks
+    (let [token (next-token world)]
       (assoc world :tokens (rest tokens) :token token))))
 
-(defn extract-statement [token])
+(defn extract-expression [world right-binding-power]
+  (loop [w (advance world) left ((:null-denotation (:token world)))]
+    (if (>= right-binding-power (:token w))
+      [world left]
+      (recur (advance w) ((:left-denotation (:token w)) left)))))
 
-(defn extract-statements [token]
-  (loop [statements []]
-    (if (or (= :end (:id token)) (= "{" (:id token)))
-      statements
-      (if-let [statement (extract-statement token)]
-        (recur (conj statements statement))
-        statements))))
+(defn extract-statement [world]
+  (if-let [std (:statement-denotation (:token world))]
+    (let [new-world (advance world)]
+      [(assoc new-world :scope (scope-reserve (:scope world) (:token world))) std])
+    (let [[new-world expression] (extract-expression world)]
+      ;TODO: checks
+      [(advance new-world ";") expression])))
+
+(defn extract-statements [world]
+  (loop [w world statements []]
+    (if (or (= :end (:id (:token w))) (= "{" (:id (:token w))))
+      [w statements]
+      (let [[new-world statement] (extract-statement w)]
+        (recur [new-world (conj statements statement)])))))
 
 (defn parse [tokens]
   (let [world {:scope scope-proto
