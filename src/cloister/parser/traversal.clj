@@ -25,18 +25,19 @@
       (assoc world :tokens (rest (:tokens world)) :token token))))
 
 (defn extract-expression [world right-binding-power]
-  (loop [w (advance world) left ((:null-denotation (:token world)))] ;TODO: does invocation need world?
-    (if (>= right-binding-power (:token w))
-      [world left]
-      (recur (advance w) ((:left-denotation (:token w)) left))))) ;TODO: does invocation need world?
+  (loop [[w left] ((:null-denotation (:token world)) (advance world))]
+    (if (>= right-binding-power (:left-binding-power (:token w)))
+      [w left]
+      (recur ((:left-denotation (:token w)) (advance w) left)))))
 
 (defn extract-statement [world]
   (if-let [std (:statement-denotation (:token world))]
     (let [new-world (assoc (advance world) :scope (cloister.parser.scope/scope-reserve (:scope world) (:token world)))]
-      (std new-world)
+      (std new-world))
     (let [[new-world expression] (extract-expression world 0)]
-      ;TODO: checks
-      [(advance new-world ";") expression]))))
+      (if (and (not (:assignment expression)) (not (= "(" (:id expression))))
+        (error "Bad expression statement")) 
+      [(advance new-world ";") expression])))
 
 (defn extract-statements [world]
   (loop [w world statements []]
