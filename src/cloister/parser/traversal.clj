@@ -8,7 +8,7 @@
   (if-let [tokens (:tokens world)]
     (let [token (first tokens)]
       (if-let [base (cond
-                      (= :name     (:type token)) (cloister.parser.scope/scope-find (:scope world) (:value token))
+                      (= :name     (:type token)) (cloister.parser.scope/scope-find world (:value token))
                       (= :operator (:type token)) (symbol-find world (:value token))
                       (= :string   (:type token)) (symbol-find world :literal)
                       (= :number   (:type token)) (symbol-find world :literal)

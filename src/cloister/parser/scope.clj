@@ -23,13 +23,15 @@
       (let [definition (assoc (merge token definition-proto) :scope scope)]
         (assoc scope :definitions (assoc defs name definition))))))
 
-(defn scope-find [scope name]
+(defn scope-find [{scope :scope symbol-table :symbol-table} name]
   (loop [s scope]
     (if s
       (if-let [definition ((:definitions s) name)]
         definition
         (recur (:parent s)))
-      nil)))
+      (if-let [symbol (symbol-table name)]
+        symbol
+        (:name symbol-table)))))
 
 (defn scope-reserve [scope definition]
   (let [name (:value definition)

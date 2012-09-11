@@ -63,6 +63,11 @@
       (assoc table id (assoc existing-symbol :left-binding-power (max (:left-binding-power symbol) (:left-binding-power existing-symbol))))
       (assoc table id symbol))))
 
+(def ^{:private true} var
+  (make-statement "var" (fn [world]
+                          
+                          [world nil])))
+
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
                          (register-symbol (make-symbol :name))
