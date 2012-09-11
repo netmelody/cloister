@@ -1,4 +1,4 @@
-(ns cloister.symbols
+(ns cloister.parser.symbols
   (:require [cloister.parser.traversal])
   (:require [cloister.parser.scope]))
 

@@ -6,13 +6,8 @@
 (defn- error [message] (println message))
 
 (defn parse [tokens]
-  (let [world {:scope scope-proto
-               :symbol-table base-symbol-table
-               :tokens tokens}
-        token nil
-        token-nr 0]
-    
-    (advance world token token-nr)
-    
-    (println "parsed")
-    {}))
+  (let [world (cloister.parser.traversal/advance {:scope cloister.parser.scope/scope-proto
+                                                  :symbol-table cloister.parser.symbols/base-symbol-table
+                                                  :tokens tokens})
+        [new-world statements] (cloister.parser.traversal/extract-statements world)]
+    statements))
