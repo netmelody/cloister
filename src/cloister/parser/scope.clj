@@ -1,5 +1,7 @@
 (ns cloister.parser.scope)
 
+(defn- error [message] (println message))
+
 (def definition-proto
   {:reserved false
    :null-denotation (fn [] (error "return this?"))

@@ -7,9 +7,9 @@
 (def symbol-proto
   {:id nil
    :value nil
-   :null-denotation (fn [world] (error "Undefined."))
-   :left-denotation (fn [world left] (error "Missing operator."))
-   :statement-denotation (fn [world] (error "Undefined."))
+   :null-denotation (fn [world] (error "Undefined.") world)
+   :left-denotation (fn [world left] (error "Missing operator.") world)
+   :statement-denotation (fn [world] (error "Undefined.") world)
    :left-binding-power 0
    :right-binding-power 0})
 
@@ -22,14 +22,14 @@
          :value value
          :null-denotation (fn [world]
                             (let [constant (assoc ((:symbol-table world) id) :arity :literal)]
-                              [(assoc world :scope (scope-reserve (:scope world) constant)) constant]))))
+                              [(assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) constant)) constant]))))
 
 (defn make-offset-infix
-  ([id binding-power offset
-    (make-infix id binding-power offset (fn [world left]
-                                          (let [[new-world expr] (extract-expression world (- binding-power offset))
+  ([id binding-power offset]
+    (make-offset-infix id binding-power offset (fn [world left]
+                                          (let [[new-world expr] (cloister.parser.traversal/extract-expression world (- binding-power offset))
                                                 infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary)]
-                                            [new-world infix])))])
+                                            [new-world infix]))))
   ([id binding-power offset left-denotation]
     (assoc (make-symbol id binding-power) :left-denotation left-denotation)))
 
@@ -43,14 +43,14 @@
 
 (defn make-assignment [id]
   (assoc (make-symbol id 10) :left-denotation (fn [world left]
-                                                (let [[new-world expr] (extract-expression world 9)
+                                                (let [[new-world expr] (cloister.parser.traversal/extract-expression world 9)
                                                       infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary :assignment true)]
                                                   [new-world infix]))))
 
 (defn make-prefix
-  ([id] (make-prefix id (fn [world] (let [[new-world expr] (extract-expression world 70)
+  ([id] (make-prefix id (fn [world] (let [[new-world expr] (cloister.parser.traversal/extract-expression world 70)
                                           prefix (assoc ((:symbol-table world) id) :first expr :arity :unary)]
-                                      [(assoc new-world :scope (scope-reserve (:scope new-world) prefix)) prefix]))))
+                                      [(assoc new-world :scope (cloister.parser.scope/scope-reserve (:scope new-world) prefix)) prefix]))))
   ([id nud] (assoc (make-symbol id) :null-denotation nud)))
 
 (defn register-symbol [table symbol]
