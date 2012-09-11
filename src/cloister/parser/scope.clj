@@ -1,15 +1,15 @@
 (ns cloister.parser.scope)
 
 (defn- error [message] (println message))
+(defn- itself [map property] (assoc map property (fn [&] (itself map property))))
 
 (def definition-proto
-  {:reserved false
-   :null-denotation (fn [] (error "return this?"))
-   :left-denotation nil
-   :statement-denotation nil
-   :left-binding-power 0
-   :scope nil
-   :arity nil})
+  (itself {:reserved false
+           :left-denotation nil
+           :statement-denotation nil
+           :left-binding-power 0
+           :scope nil
+           :arity nil} :null-denotation))
 
 (def scope-proto
   {:parent nil

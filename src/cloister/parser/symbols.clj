@@ -3,13 +3,14 @@
   (:require [cloister.parser.scope]))
 
 (defn- error [message] (println message))
+(defn- itself [map property] (assoc map property (fn [&] (itself map property))))
 
 (def symbol-proto
   {:id nil
    :value nil
-   :null-denotation (fn [world] (error "Undefined.") world)
-   :left-denotation (fn [world left] (error "Missing operator.") world)
-   :statement-denotation (fn [world] (error "Undefined.") world)
+   :null-denotation (fn [world] (error "Undefined.") [world nil])
+   :left-denotation (fn [world left] (error "Missing operator.") [world nil])
+   :statement-denotation (fn [world] (error "Undefined.") [world nil])
    :left-binding-power 0
    :right-binding-power 0})
 
@@ -53,6 +54,9 @@
                                       [(assoc new-world :scope (cloister.parser.scope/scope-reserve (:scope new-world) prefix)) prefix]))))
   ([id nud] (assoc (make-symbol id) :null-denotation nud)))
 
+(defn make-statement [id statement-denotation]
+  (assoc (make-symbol id) :statement-denotation statement-denotation))
+
 (defn register-symbol [table symbol]
   (let [id (:id symbol)]
     (if-let [existing-symbol (table id)]
@@ -75,4 +79,9 @@
                          (register-symbol (make-constant "null" nil))
                          (register-symbol (make-constant "pi" (double 3.141592653589793)))
                          (register-symbol (make-constant "Object" {}))
-                         (register-symbol (make-constant "Array" []))))
+                         (register-symbol (make-constant "Array" []))
+                         (register-symbol (itself (make-symbol :literal) :null-denotation))
+                         (register-symbol (assoc (make-symbol "this") :null-denotation (fn [world] 1)))
+                         (register-symbol (make-assignment "="))
+                         (register-symbol (make-assignment "+="))
+                         (register-symbol (make-assignment "-="))))
