@@ -65,8 +65,18 @@
 
 (def ^{:private true} var
   (make-statement "var" (fn [world]
-                          
-                          [world nil])))
+                          (loop [w world assignments []]
+                            (let [token (:token w)]
+                              (if (not (= :name (:arity token)))
+                                (error "expected a new variable name.")
+                                (let [new-w (assoc (cloister.parser.traversal/advance w) :scope (cloister.parser.scope/scope-reserve (:scope w) token))
+                                      new-token (:token new-w)]
+                                  (if (= "=" (:id new-token))
+                                    (let [[new-new-w expr] (cloister.parser.traversal/extract-expression (cloister.parser.traversal/advance new-w "=") 0)
+                                          assignment (assoc new-token :first token :second expr :arity :binary)]
+                                      (if (= "," (:id new-token))
+                                        (recur (cloister.parser.traversal/advance new-new-w ",") (conj assignments assignment)))))
+                                  )))))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
