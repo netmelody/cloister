@@ -4,6 +4,7 @@
 
 (defn- error [message] (println message))
 (defn- itself [map property] (assoc map property (fn [&] (itself map property))))
+(defn- scope-reserve [world token] (assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) token)))
 
 (def symbol-proto
   {:id nil
@@ -23,7 +24,7 @@
          :value value
          :null-denotation (fn [world]
                             (let [constant (assoc ((:symbol-table world) id) :arity :literal)]
-                              [(assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) constant)) constant]))))
+                              [(scope-reserve world constant) constant]))))
 
 (defn make-offset-infix
   ([id binding-power offset]
@@ -51,7 +52,7 @@
 (defn make-prefix
   ([id] (make-prefix id (fn [world] (let [[new-world expr] (cloister.parser.traversal/extract-expression world 70)
                                           prefix (assoc ((:symbol-table world) id) :first expr :arity :unary)]
-                                      [(assoc new-world :scope (cloister.parser.scope/scope-reserve (:scope new-world) prefix)) prefix]))))
+                                      [(scope-reserve new-world prefix) prefix]))))
   ([id nud] (assoc (make-symbol id) :null-denotation nud)))
 
 (defn make-statement [id statement-denotation]
@@ -63,20 +64,24 @@
       (assoc table id (assoc existing-symbol :left-binding-power (max (:left-binding-power symbol) (:left-binding-power existing-symbol))))
       (assoc table id symbol))))
 
-(def ^{:private true} var
-  (make-statement "var" (fn [world]
-                          (loop [w world assignments []]
-                            (let [token (:token w)]
-                              (if (not (= :name (:arity token)))
-                                (error "expected a new variable name.")
-                                (let [new-w (assoc (cloister.parser.traversal/advance w) :scope (cloister.parser.scope/scope-reserve (:scope w) token))
-                                      new-token (:token new-w)]
-                                  (if (= "=" (:id new-token))
-                                    (let [[new-new-w expr] (cloister.parser.traversal/extract-expression (cloister.parser.traversal/advance new-w "=") 0)
-                                          assignment (assoc new-token :first token :second expr :arity :binary)]
-                                      (if (= "," (:id new-token))
-                                        (recur (cloister.parser.traversal/advance new-new-w ",") (conj assignments assignment)))))
-                                  )))))))
+(defn- extract-assignment [world name-token]
+  (let [token (:token world)]
+    (if (= "=" (:id token))
+      (let [[new-world expr] (cloister.parser.traversal/extract-expression (cloister.parser.traversal/advance world "=") 0)
+            assignment (assoc token :first name-token :second expr :arity :binary)]
+        [new-world assignment]))
+    [world nil]))
+
+(defn- var-std [world]
+  (loop [w world assignments []]
+    (let [name-token (:token w)]
+      (if (not (= :name (:arity name-token)))
+        (error "expected a new variable name.")
+        (let [[w2 assignment] (extract-assignment (scope-reserve (cloister.parser.traversal/advance w) name-token) name-token)
+              a2 (if assignment (conj assignments assignment) assignments)]
+          (if (= "," (:id (:token w2)))
+            (recur (cloister.parser.traversal/advance w2 ",") a2)
+            [(cloister.parser.traversal/advance w2 ";" a2)]))))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
@@ -99,4 +104,6 @@
                          (register-symbol (assoc (make-symbol "this") :null-denotation (fn [world] 1)))
                          (register-symbol (make-assignment "="))
                          (register-symbol (make-assignment "+="))
-                         (register-symbol (make-assignment "-="))))
+                         (register-symbol (make-assignment "-="))
+                         (register-symbol (make-statement "var" var-std))))
+
