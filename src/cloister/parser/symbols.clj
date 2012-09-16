@@ -2,16 +2,16 @@
   (:require [cloister.parser.traversal])
   (:require [cloister.parser.scope]))
 
-(defn- error [message] (println message))
+(defn- error [token message] (println message token))
 (defn- itself [map property] (assoc map property (fn [&] (itself map property))))
 (defn- scope-reserve [world token] (assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) token)))
 
 (def symbol-proto
   {:id nil
    :value nil
-   :null-denotation (fn [world] (error "Undefined.") [world nil])
-   :left-denotation (fn [world left] (error "Missing operator.") [world nil])
-   :statement-denotation (fn [world] (error "Undefined.") [world nil])
+   :null-denotation (fn [world] (error (:token world) "Undefined.") [world nil])
+   :left-denotation (fn [world left] (error (:token world) "Missing operator.") [world nil])
+   :statement-denotation (fn [world] (error (:token world) "Undefined..") [world nil])
    :left-binding-power 0
    :right-binding-power 0})
 
@@ -76,12 +76,12 @@
   (loop [w world assignments []]
     (let [name-token (:token w)]
       (if (not (= :name (:arity name-token)))
-        (error "expected a new variable name.")
+        (error name-token "expected a new variable name.")
         (let [[w2 assignment] (extract-assignment (scope-reserve (cloister.parser.traversal/advance w) name-token) name-token)
               a2 (if assignment (conj assignments assignment) assignments)]
           (if (= "," (:id (:token w2)))
             (recur (cloister.parser.traversal/advance w2 ",") a2)
-            [(cloister.parser.traversal/advance w2 ";" a2)]))))))
+            [(cloister.parser.traversal/advance w2 ";") a2]))))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))

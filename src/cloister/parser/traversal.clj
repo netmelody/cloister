@@ -10,10 +10,10 @@
       (if-let [base (cond
                       (= :name     (:type token)) (cloister.parser.scope/scope-find world (:value token))
                       (= :operator (:type token)) (symbol-find world (:value token))
-                      (= :string   (:type token)) (symbol-find world :literal)
-                      (= :number   (:type token)) (symbol-find world :literal)
+                      (= :string   (:type token)) (symbol-find world :literal) ;arity literal
+                      (= :number   (:type token)) (symbol-find world :literal) ;arity literal
                       true nil)]
-        (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:arity token))
+        (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:type token))
         (error "Unexpected token")))
       (symbol-find world :end)))
 
