@@ -1,6 +1,6 @@
 (ns cloister.parser.scope)
 
-(defn- error [message] (println message))
+(defn- error [message] (throw (IllegalStateException. message)))
 (defn- itself [map property] (assoc map property (fn [&] (itself map property))))
 
 (def definition-proto

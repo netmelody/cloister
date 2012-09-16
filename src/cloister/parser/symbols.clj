@@ -2,7 +2,7 @@
   (:require [cloister.parser.traversal])
   (:require [cloister.parser.scope]))
 
-(defn- error [token message] (println message token))
+(defn- error [token message] (throw (IllegalStateException. (str message " " token))))
 (defn- itself [map property] (assoc map property (fn [&] (itself map property))))
 (defn- scope-reserve [world token] (assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) token)))
 
@@ -11,7 +11,7 @@
    :value nil
    :null-denotation (fn [world] (error (:token world) "Undefined.") [world nil])
    :left-denotation (fn [world left] (error (:token world) "Missing operator.") [world nil])
-   :statement-denotation (fn [world] (error (:token world) "Undefined..") [world nil])
+   :statement-denotation (fn [world] (error (:token world) "Undefined.") [world nil])
    :left-binding-power 0
    :right-binding-power 0})
 

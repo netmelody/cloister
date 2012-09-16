@@ -1,7 +1,7 @@
 (ns cloister.parser.traversal
   (:require [cloister.parser.scope]))
 
-(defn- error [message] (println message))
+(defn- error [token message] (throw (IllegalStateException. (str message " " token))))
 (defn symbol-find [world symbol] ((:symbol-table world) symbol))
 
 (defn next-token [world]
@@ -14,15 +14,17 @@
                       (= :number   (:type token)) (symbol-find world :literal) ;arity literal
                       true nil)]
         (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:type token))
-        (error "Unexpected token")))
+        (error token "Unexpected token")))
       (symbol-find world :end)))
 
 (defn advance 
   ([world] (advance world nil))
   ([world expected-token-id]
+    (if (and expected-token-id (not (= (:id (:token world)) expected-token-id)))
+      (error (:token world) (str "Expected " expected-token-id)) 
     ;TODO: checks
     (let [token (next-token world)]
-      (assoc world :tokens (rest (:tokens world)) :token token))))
+      (assoc world :tokens (rest (:tokens world)) :token token)))))
 
 (defn extract-expression [world right-binding-power]
   (loop [[w left] ((:null-denotation (:token world)) (advance world))]
@@ -36,7 +38,7 @@
       (std new-world))
     (let [[new-world expression] (extract-expression world 0)]
       (if (and (not (:assignment expression)) (not (= "(" (:id expression))))
-        (error "Bad expression statement")) 
+        (error expression "Bad expression statement")) 
       [(advance new-world ";") expression])))
 
 (defn extract-statements [world]
