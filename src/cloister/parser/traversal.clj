@@ -7,12 +7,12 @@
 (defn next-token [world]
   (if-let [token (first (:tokens world))]
     (if-let [base (cond
-                    (= :name     (:type token)) (cloister.parser.scope/scope-find world (:value token))
-                    (= :operator (:type token)) (symbol-find world (:value token))
-                    (= :string   (:type token)) (symbol-find world :literal) ;arity literal
-                    (= :number   (:type token)) (symbol-find world :literal) ;arity literal
+                    (= :name     (:type token)) (assoc (cloister.parser.scope/scope-find world (:value token)) :arity (:type token))
+                    (= :operator (:type token)) (assoc (symbol-find world (:value token)) :arity (:type token))
+                    (= :string   (:type token)) (assoc (symbol-find world :literal) :arity :literal)
+                    (= :number   (:type token)) (assoc (symbol-find world :literal) :arity :literal)
                     true nil)]
-      (assoc base :from (:from token) :to (:to token) :value (:value token) :arity (:type token))
+      (assoc base :from (:from token) :to (:to token) :value (:value token))
       (error token "Unexpected token"))
     (symbol-find world :end)))
 

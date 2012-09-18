@@ -1,7 +1,8 @@
 (ns cloister.parser
   (:require [cloister.parser.traversal])
   (:require [cloister.parser.symbols])
-  (:require [cloister.parser.scope]))
+  (:require [cloister.parser.scope])
+  (:require [cloister.parser.prettify]))
 
 (defn- error [message] (println message))
 
@@ -10,4 +11,4 @@
                                                   :symbol-table cloister.parser.symbols/base-symbol-table
                                                   :tokens tokens})
         [new-world statements] (cloister.parser.traversal/extract-statements world)]
-    statements))
+    (cloister.parser.prettify/prettify statements)))
