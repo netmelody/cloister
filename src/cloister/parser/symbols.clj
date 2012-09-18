@@ -86,6 +86,10 @@
             (recur (cloister.parser.traversal/advance w2 ",") a2)
             [(cloister.parser.traversal/advance w2 ";") (one-or-many a2)]))))))
 
+(defn- this-nud [world token]
+  (let [this (assoc token :arity :this)]
+    [(scope-reserve world this) this]))
+
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
                          (register-symbol (make-symbol :name))
@@ -103,7 +107,7 @@
                          (register-symbol (make-constant "Object" {}))
                          (register-symbol (make-constant "Array" []))
                          (register-symbol (assoc (make-symbol :literal) :null-denotation (fn [world token] [world token])))
-                         (register-symbol (assoc (make-symbol "this") :null-denotation (fn [world token] [world "TODO"])))
+                         (register-symbol (assoc (make-symbol "this") :null-denotation this-nud))
                          (register-symbol (make-assignment "="))
                          (register-symbol (make-assignment "+="))
                          (register-symbol (make-assignment "-="))
