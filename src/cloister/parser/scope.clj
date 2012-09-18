@@ -1,15 +1,15 @@
 (ns cloister.parser.scope)
 
 (defn- error [message] (throw (IllegalStateException. message)))
-(defn- itself [map property] (assoc map property (fn [&] (itself map property))))
 
 (def definition-proto
-  (itself {:reserved false
-           :left-denotation nil
-           :statement-denotation nil
-           :left-binding-power 0
-           :scope nil
-           :arity nil} :null-denotation))
+  {:reserved false
+   :null-denotation (fn [world token] [world token]) 
+   :left-denotation nil
+   :statement-denotation nil
+   :left-binding-power 0
+   :scope nil
+   :arity nil})
 
 (def scope-proto
   {:parent nil
