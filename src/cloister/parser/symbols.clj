@@ -10,7 +10,7 @@
    :value nil
    :null-denotation (fn [world token] (error (:token world) "Undefined.") [world nil])
    :left-denotation (fn [world token left] (error (:token world) "Missing operator.") [world nil])
-   :statement-denotation (fn [world token] (error (:token world) "Undefined.") [world nil])
+   ;:statement-denotation (fn [world token] (error (:token world) "Undefined.") [world nil])
    :left-binding-power 0
    :right-binding-power 0})
 
@@ -27,7 +27,7 @@
 
 (defn make-offset-infix
   ([id binding-power offset]
-    (make-offset-infix id binding-power offset (fn [world left]
+    (make-offset-infix id binding-power offset (fn [world token left]
                                           (let [[new-world expr] (cloister.parser.traversal/extract-expression world (- binding-power offset))
                                                 infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary)]
                                             [new-world infix]))))
@@ -90,6 +90,11 @@
   (let [this (assoc token :arity :this)]
     [(scope-reserve world this) this]))
 
+(defn- ?-led [world token left]
+  (let [[w1 expr1] (cloister.parser.traversal/extract-expression world 0)
+        [w2 expr2] (cloister.parser.traversal/extract-expression (cloister.parser.traversal/advance w1 ":") 0)]
+    [w2 (assoc token :first left :second expr1 :third expr2 :arity :ternary)]))
+
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
                          (register-symbol (make-symbol :name))
@@ -111,5 +116,5 @@
                          (register-symbol (make-assignment "="))
                          (register-symbol (make-assignment "+="))
                          (register-symbol (make-assignment "-="))
+                         (register-symbol (make-infix "?" 20 ?-led))
                          (register-symbol (make-statement "var" var-std))))
-
