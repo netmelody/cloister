@@ -1,16 +1,16 @@
 (ns cloister.parser.symbols
+  (:use [cloister.parser.util])
   (:require [cloister.parser.traversal])
   (:require [cloister.parser.scope]))
 
-(defn- error [token message] (throw (IllegalStateException. (str message " " token))))
 (defn- scope-reserve [world token] (assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) token)))
 
 (def symbol-proto
   {:id nil
    :value nil
-   :null-denotation (fn [world token] (error (:token world) "Undefined.") [world nil])
-   :left-denotation (fn [world token left] (error (:token world) "Missing operator.") [world nil])
-   ;:statement-denotation (fn [world token] (error (:token world) "Undefined.") [world nil])
+   :null-denotation (fn [world token] (report-error (:token world) "Undefined.") [world nil])
+   :left-denotation (fn [world token left] (report-error (:token world) "Missing operator.") [world nil])
+   ;:statement-denotation (fn [world token] (report-error (:token world) "Undefined.") [world nil])
    :left-binding-power 0
    :right-binding-power 0})
 
@@ -79,7 +79,7 @@
   (loop [w world assignments []]
     (let [name-token (:token w)]
       (if (not (= :name (:arity name-token)))
-        (error name-token "expected a new variable name.")
+        (report-error name-token "expected a new variable name.")
         (let [[w2 assignment] (extract-assignment (scope-reserve (cloister.parser.traversal/advance w) name-token) name-token)
               a2 (if assignment (conj assignments assignment) assignments)]
           (if (= "," (:id (:token w2)))

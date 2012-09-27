@@ -1,4 +1,6 @@
-(ns cloister.parser.prettify)
+(ns cloister.parser.util)
+
+(defn report-error [token message] (throw (IllegalStateException. (str message " " token))))
 
 (defn prettify [statements]
   (cond

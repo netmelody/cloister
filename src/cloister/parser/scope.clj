@@ -1,6 +1,5 @@
-(ns cloister.parser.scope)
-
-(defn- error [message] (throw (IllegalStateException. message)))
+(ns cloister.parser.scope
+  (:use [cloister.parser.util]))
 
 (def definition-proto
   {:reserved false
@@ -19,7 +18,7 @@
   (let [name (:value token)
         defs (:definitions scope)]
     (if (defs name)
-      (error (str name " already defined"))
+      (report-error (defs name) (str name " already defined"))
       (let [definition (assoc (merge token definition-proto) :scope scope)]
         (assoc scope :definitions (assoc defs name definition))))))
 

@@ -1,14 +1,10 @@
 (ns cloister.parser
-  (:require [cloister.parser.traversal])
-  (:require [cloister.parser.symbols])
-  (:require [cloister.parser.scope])
-  (:require [cloister.parser.prettify]))
-
-(defn- error [message] (println message))
+  (:use [cloister.parser.util :only [prettify]])
+  (:use [cloister.parser.scope :only [scope-proto]])
+  (:use [cloister.parser.traversal :only [advance extract-statements]])
+  (:use [cloister.parser.symbols :only [base-symbol-table]]))
 
 (defn parse [tokens]
-  (let [world (cloister.parser.traversal/advance {:scope cloister.parser.scope/scope-proto
-                                                  :symbol-table cloister.parser.symbols/base-symbol-table
-                                                  :tokens tokens})
-        [new-world statements] (cloister.parser.traversal/extract-statements world)]
-    (cloister.parser.prettify/prettify statements)))
+  (let [world (advance {:scope scope-proto :symbol-table base-symbol-table :tokens tokens})
+        [new-world statements] (extract-statements world)]
+    (prettify statements)))
