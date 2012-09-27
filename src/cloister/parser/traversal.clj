@@ -11,7 +11,7 @@
                     (= :operator (:type token)) (assoc (symbol-find world (:value token)) :arity (:type token))
                     (= :string   (:type token)) (assoc (symbol-find world :literal) :arity :literal)
                     (= :number   (:type token)) (assoc (symbol-find world :literal) :arity :literal)
-                    true nil)]
+                    :else nil)]
       (assoc base :from (:from token) :to (:to token) :value (:value token))
       (report-error token "Unexpected token"))
     (symbol-find world :end)))

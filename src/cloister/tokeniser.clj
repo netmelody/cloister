@@ -77,7 +77,7 @@
       (num? char) (next-num-from text)
       (quote? char) (next-string-from text)
       (= (seq "//") (take 2 text)) (next-comment-from text)
-      true (next-operator-from text prefix? suffix?))))
+      :else (next-operator-from text prefix? suffix?))))
 
 (defn tokenise
   ([text] (tokenise text #{\= \< \> \! \+ \- \* \& \| \/ \% \^ \'} #{\= \< \> \& \|}))
