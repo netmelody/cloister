@@ -1,9 +1,9 @@
 (ns cloister.parser.symbols
-  (:use [cloister.parser.util])
-  (:require [cloister.parser.traversal])
-  (:require [cloister.parser.scope]))
+  (:use [cloister.parser.util :only [report-error]])
+  (:use [cloister.parser.scope :only [scope-find scope-reserve]])
+  (:use [cloister.parser.traversal :only [advance extract-expression]]))
 
-(defn- scope-reserve [world token] (assoc world :scope (cloister.parser.scope/scope-reserve (:scope world) token)))
+(defn- reserve [world token] (assoc world :scope (scope-reserve (:scope world) token)))
 
 (def symbol-proto
   {:id nil
@@ -23,12 +23,12 @@
          :value value
          :null-denotation (fn [world token]
                             (let [constant (assoc ((:symbol-table world) id) :arity :literal)]
-                              [(scope-reserve world constant) constant]))))
+                              [(reserve world constant) constant]))))
 
 (defn make-offset-infix
   ([id binding-power offset]
     (make-offset-infix id binding-power offset (fn [world token left]
-                                          (let [[new-world expr] (cloister.parser.traversal/extract-expression world (- binding-power offset))
+                                          (let [[new-world expr] (extract-expression world (- binding-power offset))
                                                 infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary)]
                                             [new-world infix]))))
   ([id binding-power offset left-denotation]
@@ -44,14 +44,14 @@
 
 (defn make-assignment [id]
   (assoc (make-symbol id 10) :left-denotation (fn [world token left]
-                                                (let [[new-world expr] (cloister.parser.traversal/extract-expression world 9)
+                                                (let [[new-world expr] (extract-expression world 9)
                                                       infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary :assignment true)]
                                                   [new-world infix]))))
 
 (defn make-prefix
-  ([id] (make-prefix id (fn [world token] (let [[new-world expr] (cloister.parser.traversal/extract-expression world 70)
+  ([id] (make-prefix id (fn [world token] (let [[new-world expr] (extract-expression world 70)
                                                 prefix (assoc ((:symbol-table world) id) :first expr :arity :unary)]
-                                            [(scope-reserve new-world prefix) prefix]))))
+                                            [(reserve new-world prefix) prefix]))))
   ([id nud] (assoc (make-symbol id) :null-denotation nud)))
 
 (defn make-statement [id statement-denotation]
@@ -66,7 +66,7 @@
 (defn- extract-assignment [world name-token]
   (let [token (:token world)]
     (if (= "=" (:id token))
-      (let [[new-world expr] (cloister.parser.traversal/extract-expression (cloister.parser.traversal/advance world "=") 0)
+      (let [[new-world expr] (extract-expression (advance world "=") 0)
             assignment (assoc token :first name-token :second expr :arity :binary)]
         [new-world assignment])
       [world nil])))
@@ -80,19 +80,19 @@
     (let [name-token (:token w)]
       (if (not (= :name (:arity name-token)))
         (report-error name-token "expected a new variable name.")
-        (let [[w2 assignment] (extract-assignment (scope-reserve (cloister.parser.traversal/advance w) name-token) name-token)
+        (let [[w2 assignment] (extract-assignment (reserve (advance w) name-token) name-token)
               a2 (if assignment (conj assignments assignment) assignments)]
           (if (= "," (:id (:token w2)))
-            (recur (cloister.parser.traversal/advance w2 ",") a2)
-            [(cloister.parser.traversal/advance w2 ";") (one-or-many a2)]))))))
+            (recur (advance w2 ",") a2)
+            [(advance w2 ";") (one-or-many a2)]))))))
 
 (defn- this-nud [world token]
   (let [this (assoc token :arity :this)]
-    [(scope-reserve world this) this]))
+    [(reserve world this) this]))
 
 (defn- ?-led [world token left]
-  (let [[w1 expr1] (cloister.parser.traversal/extract-expression world 0)
-        [w2 expr2] (cloister.parser.traversal/extract-expression (cloister.parser.traversal/advance w1 ":") 0)]
+  (let [[w1 expr1] (extract-expression world 0)
+        [w2 expr2] (extract-expression (advance w1 ":") 0)]
     [w2 (assoc token :first left :second expr1 :third expr2 :arity :ternary)]))
 
 (def base-symbol-table (-> {}

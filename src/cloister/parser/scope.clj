@@ -1,5 +1,5 @@
 (ns cloister.parser.scope
-  (:use [cloister.parser.util]))
+  (:use [cloister.parser.util :only [report-error]]))
 
 (def definition-proto
   {:reserved false

@@ -1,13 +1,13 @@
 (ns cloister.parser.traversal
-  (:use [cloister.parser.util])
-  (:require [cloister.parser.scope]))
+  (:use [cloister.parser.util :only [report-error]])
+  (:use [cloister.parser.scope :only [scope-find scope-reserve]]))
 
 (defn symbol-find [world symbol] ((:symbol-table world) symbol))
 
 (defn next-token [world]
   (if-let [token (first (:tokens world))]
     (if-let [base (cond
-                    (= :name     (:type token)) (assoc (cloister.parser.scope/scope-find world (:value token)) :arity (:type token))
+                    (= :name     (:type token)) (assoc (scope-find world (:value token)) :arity (:type token))
                     (= :operator (:type token)) (assoc (symbol-find world (:value token)) :arity (:type token))
                     (= :string   (:type token)) (assoc (symbol-find world :literal) :arity :literal)
                     (= :number   (:type token)) (assoc (symbol-find world :literal) :arity :literal)
@@ -33,7 +33,7 @@
 
 (defn extract-statement [world]
   (if-let [std (:statement-denotation (:token world))]
-    (let [new-world (assoc (advance world) :scope (cloister.parser.scope/scope-reserve (:scope world) (:token world)))]
+    (let [new-world (assoc (advance world) :scope (scope-reserve (:scope world) (:token world)))]
       (std new-world (:token world)))
     (let [[new-world expression] (extract-expression world 0)]
       (if (and (not (:assignment expression)) (not (= "(" (:id expression))))
