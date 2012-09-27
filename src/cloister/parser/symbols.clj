@@ -75,25 +75,37 @@
   (let [len (count arr)]
     (cond (= 0 len) nil (= 1 len) (arr 0) (> 1 len) arr)))
 
-(defn- var-std [world token]
-  (loop [w world assignments []]
-    (let [name-token (:token w)]
-      (if (not (= :name (:arity name-token)))
-        (report-error name-token "expected a new variable name.")
-        (let [[w2 assignment] (extract-assignment (reserve (advance w) name-token) name-token)
-              a2 (if assignment (conj assignments assignment) assignments)]
-          (if (= "," (:id (:token w2)))
-            (recur (advance w2 ",") a2)
-            [(advance w2 ";") (one-or-many a2)]))))))
 
-(defn- this-nud [world token]
-  (let [this (assoc token :arity :this)]
-    [(reserve world this) this]))
+; Symbol Definitions
 
-(defn- ?-led [world token left]
-  (let [[w1 expr1] (extract-expression world 0)
-        [w2 expr2] (extract-expression (advance w1 ":") 0)]
-    [w2 (assoc token :first left :second expr1 :third expr2 :arity :ternary)]))
+(def ^{:private true} _literal
+  (assoc (make-symbol :literal)
+         :null-denotation (fn [world token] [world token])))
+
+(def ^{:private true} _this
+  (assoc (make-symbol "this")
+         :null-denotation (fn [world token]
+                            (let [this (assoc token :arity :this)]
+                              [(reserve world this) this]))))
+
+(def ^{:private true} _?
+  (make-infix "?" 20
+              (fn [world token left]
+                (let [[w1 expr1] (extract-expression world 0)
+                      [w2 expr2] (extract-expression (advance w1 ":") 0)]
+                  [w2 (assoc token :first left :second expr1 :third expr2 :arity :ternary)]))))
+
+(def ^{:private true} _var
+  (make-statement "var" (fn [world token]
+                          (loop [w world assignments []]
+                            (let [name-token (:token w)]
+                              (if (not (= :name (:arity name-token)))
+                                (report-error name-token "expected a new variable name.")
+                                (let [[w2 assignment] (extract-assignment (reserve (advance w) name-token) name-token)
+                                      a2 (if assignment (conj assignments assignment) assignments)]
+                                  (if (= "," (:id (:token w2)))
+                                    (recur (advance w2 ",") a2)
+                                    [(advance w2 ";") (one-or-many a2)]))))))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
@@ -111,10 +123,10 @@
                          (register-symbol (make-constant "pi" (double 3.141592653589793)))
                          (register-symbol (make-constant "Object" {}))
                          (register-symbol (make-constant "Array" []))
-                         (register-symbol (assoc (make-symbol :literal) :null-denotation (fn [world token] [world token])))
-                         (register-symbol (assoc (make-symbol "this") :null-denotation this-nud))
+                         (register-symbol _literal)
+                         (register-symbol _this)
                          (register-symbol (make-assignment "="))
                          (register-symbol (make-assignment "+="))
                          (register-symbol (make-assignment "-="))
-                         (register-symbol (make-infix "?" 20 ?-led))
-                         (register-symbol (make-statement "var" var-std))))
+                         (register-symbol _?)
+                         (register-symbol _var)))
