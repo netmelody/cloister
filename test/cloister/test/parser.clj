@@ -36,7 +36,7 @@
                                  {:to 21 :from 20 :type :operator :value ";"}]))))
 
 ; var i = function() { return 1; };
-(deftest parses-simple-assignment
+(deftest parses-simple-function-declaration
   (is (= [{:value "="
            :arity :binary
            :first  {:value "i" :arity :name}
