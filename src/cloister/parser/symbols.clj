@@ -41,11 +41,11 @@
                                                       infix (assoc ((:symbol-table world) id) :first left :second expr :arity :binary :assignment true)]
                                                   [new-world infix]))))
 
-(defn make-prefix
-  ([id] (make-prefix id (fn [world token] (let [[new-world expr] (extract-expression world 70)
-                                                prefix (assoc ((:symbol-table world) id) :first expr :arity :unary)]
-                                            [(reserve new-world prefix) prefix]))))
-  ([id nud] (assoc (make-symbol id) :null-denotation nud)))
+(defn make-prefix [id]
+  (assoc (make-symbol id) :null-denotation (fn [world token]
+                                             (let [[new-world expr] (extract-expression world 70)
+                                                   prefix (assoc ((:symbol-table world) id) :first expr :arity :unary)]
+                                               [(reserve new-world prefix) prefix]))))
 
 (defn register-symbol [table symbol]
   (let [id (:id symbol)]
@@ -97,6 +97,11 @@
                                          (if (= "," (:id (:token w2)))
                                            (recur (advance w2 ",") a2)
                                            [(advance w2 ";") (one-or-many a2)]))))))))
+
+(def ^{:private true} _function
+  (assoc (make-prefix "function")
+         :null-denotation (fn [world token]
+                            [world token])))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
