@@ -106,15 +106,15 @@
            :second {:value "function"
                     :arity :function
                     :first [{:value "a" :arity :name}]
-                    :second {:value "if"
-                             :arity :statement
-                             :first {:value "a" :arity :name}
-                             :second {:value "return"
-                                      :arity :statement
-                                      :first {:value 1 :arity :literal}}
-                             :third {:value "return"
-                                     :arity :statement
-                                     :first {:value 2 :arity :literal}}}}}]
+                    :second [{:value "if"
+                              :arity :statement
+                              :first {:value "a" :arity :name}
+                              :second [{:value "return"
+                                        :arity :statement
+                                        :first {:value 1 :arity :literal}}]
+                              :third [{:value "return"
+                                       :arity :statement
+                                       :first {:value 2 :arity :literal}}]}]}}]
          (cloister.parser/parse [{:from 0  :to 3  :type :name     :value "var"      }
                                  {:from 4  :to 5  :type :name     :value "k"        }
                                  {:from 6  :to 7  :type :operator :value "="        }

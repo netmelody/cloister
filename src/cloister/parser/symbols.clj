@@ -120,7 +120,10 @@
                                                             [w2 exprs])))))]
                               [(advance w "}") (assoc identity-token :first expressions :arity :unary)]))
          :statement-denotation (fn [world identity-token]
-                                 (report-error identity-token "std not yet implemented!"))))
+                                 (let [w1 (assoc world :scope (scope-create-child (:scope world)))
+                                       [w2 statements] (extract-statements w1)
+                                       w3 (advance w2)]
+                                   [(assoc w3 :scope (:parent (:scope w3))) statements]))))
 
 (def ^{:private true} _?
   (assoc (make-symbol "?" 20)
@@ -147,7 +150,7 @@
          :statement-denotation (fn [world identity-token]
                                  (let [[w1 first] (extract-expression (advance world "(") 0)
                                        [w2 second] (extract-block (advance w1 ")"))
-                                       [w3 third] (if (= ("else" (:id (:token w2))))
+                                       [w3 third] (if (= "else" (:id (:token w2)))
                                                     (let [w3a (advance (reserve w2 (:token w2)) "else")]
                                                       (if (= "if" (:id (:token w3a))) (extract-statement w3a) (extract-block w3a)))
                                                     [w2 nil])]
@@ -184,7 +187,7 @@
                                                       [w3b params])))))]
                               (let [[w5 statements] (extract-statements (advance (advance w4 ")") "{"))
                                     w6 (advance w5 "}")]
-                                [(assoc w6 :scope (:parent (:scope w6))) (assoc this :first [] :arity :function :second statements)])))))
+                                [(assoc w6 :scope (:parent (:scope w6))) (assoc this :first params :arity :function :second statements)])))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
