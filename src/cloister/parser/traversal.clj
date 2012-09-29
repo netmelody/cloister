@@ -26,10 +26,12 @@
       (assoc world :tokens (rest (:tokens world)) :token token)))))
 
 (defn extract-expression [world right-binding-power]
-  (loop [[w left] ((:null-denotation (:token world)) (advance world) (:token world))]
-    (if (>= right-binding-power (:left-binding-power (:token w)))
-      [w left]
-      (recur ((:left-denotation (:token w)) (advance w) (:token w) left)))))
+  (let [nud (:null-denotation (:token world))]
+    (if (nil? nud) (report-error (:token world) "Missing null denotation"))
+    (loop [[w left] (nud (advance world) (:token world))]
+      (if (>= right-binding-power (:left-binding-power (:token w)))
+        [w left]
+        (recur ((:left-denotation (:token w)) (advance w) (:token w) left))))))
 
 (defn extract-statement [world]
   (if-let [std (:statement-denotation (:token world))]

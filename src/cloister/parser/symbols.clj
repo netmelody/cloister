@@ -83,7 +83,24 @@
          :left-denotation (fn [world identity-token left]
                             (report-error identity-token "led not yet implemented!"))
          :null-denotation (fn [world identity-token]
-                            (let [[w1 expr] (extract-expression world 0)] [(advance w1 ")" expr)]))))
+                            (let [[w1 expr] (extract-expression world 0)]
+                              [(advance w1 ")") expr]))))
+
+(def ^{:private true} _open-square
+  (assoc (make-symbol "[" 80)
+         :left-denotation (fn [world identity-token left]
+                            (let [[w1 expr] (extract-expression world 0)]
+                              [(advance w1 "]") (assoc identity-token :first left :second expr :arity :binary)]))
+         :null-denotation (fn [world identity-token]
+                            (let [[w expressions] (if (= "]" (:id (:token world)))
+                                                    [world []]
+                                                    (loop [w1 world expressions []]
+                                                      (let [[w2 expr] (extract-expression w1 0)
+                                                            exprs (conj expressions expr)]
+                                                        (if (= "," (:id (:token w2)))
+                                                          (recur (advance w2 ",") exprs)
+                                                          [w2 exprs]))))]
+                              [(advance w "]") (assoc identity-token :first expressions :arity :unary)]))))
 
 (def ^{:private true} _open-curly
   (assoc (make-symbol "{")
@@ -157,6 +174,7 @@
                          (register-symbol (make-assignment "-="))
                          (register-symbol _?)
                          (register-symbol _open-parens)
+                         (register-symbol _open-square)
                          (register-symbol _open-curly)
                          (register-symbol _var)
                          (register-symbol _return)
