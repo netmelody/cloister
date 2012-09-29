@@ -1,7 +1,7 @@
 (ns cloister.parser.symbols
   (:use [cloister.parser.util :only [report-error]])
-  (:use [cloister.parser.scope :only [scope-find scope-reserve]])
-  (:use [cloister.parser.traversal :only [advance extract-expression]]))
+  (:use [cloister.parser.scope :only [scope-find scope-reserve scope-create-child]])
+  (:use [cloister.parser.traversal :only [advance extract-expression extract-statements]]))
 
 (defn- reserve [world token] (assoc world :scope (scope-reserve (:scope world) token)))
 
@@ -101,7 +101,14 @@
 (def ^{:private true} _function
   (assoc (make-prefix "function")
          :null-denotation (fn [world token]
-                            [world token])))
+                            (let [w1 (assoc world :scope (scope-create-child (:scope world)))
+                                 ; [t w2] (if (= :name (:arity token)) [(assoc token :name (:value token)) (advance (reserve w1 token))] [token w1])
+                                  [t w2] [token w1]
+                                  w3 (advance w2 "(")]
+                              ; TODO: parse args here
+                              (let [[w4 statements] (extract-statements (advance (advance w3 ")") "{"))
+                                    w5 (advance w4 "}")]
+                                [(assoc w5 :scope (:parent (:scope w5))) (assoc t :first [] :arity :function :second statements)])))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
@@ -125,4 +132,5 @@
                          (register-symbol (make-assignment "+="))
                          (register-symbol (make-assignment "-="))
                          (register-symbol _?)
-                         (register-symbol _var)))
+                         (register-symbol _var)
+                         (register-symbol _function)))
