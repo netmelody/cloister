@@ -1,8 +1,9 @@
 (ns cloister.parser.symbols
   (:use [cloister.parser.util :only [report-error]])
-  (:use [cloister.parser.scope :only [scope-find scope-reserve scope-create-child]])
+  (:use [cloister.parser.scope :only [scope-find scope-reserve scope-define scope-create-child]])
   (:use [cloister.parser.traversal :only [advance extract-expression extract-statement extract-statements extract-assignment extract-block]]))
 
+(defn- define [world token] (assoc world :scope (scope-define (:scope world) token)))
 (defn- reserve [world token] (assoc world :scope (scope-reserve (:scope world) token)))
 
 (def symbol-proto
@@ -135,7 +136,7 @@
                                    (let [name-token (:token w)]
                                      (if (not (= :name (:arity name-token)))
                                        (report-error name-token "expected a new variable name.")
-                                       (let [[w2 assignment] (extract-assignment (reserve (advance w) name-token) name-token)
+                                       (let [[w2 assignment] (extract-assignment (define (advance w) name-token) name-token)
                                              a2 (if assignment (conj assignments assignment) assignments)]
                                          (if (= "," (:id (:token w2)))
                                            (recur (advance w2 ",") a2)
@@ -168,7 +169,7 @@
          :null-denotation (fn [world identity-token]
                             (let [token (:token world)
                                   w1 (assoc world :scope (scope-create-child (:scope world)))
-                                  [this w2] (if (= :name (:arity token)) [(assoc identity-token :name (:value token)) (advance (reserve w1 token))] [identity-token w1])
+                                  [this w2] (if (= :name (:arity token)) [(assoc identity-token :name (:value token)) (advance (define w1 token))] [identity-token w1])
                                   w3 (advance w2 "(")
                                   [w4 params] (if (= ")" (:id (:token w3)))
                                               [w3 []]
@@ -176,7 +177,7 @@
                                                 (let [name-token (:token w3a)]
                                                   (if (not (= :name (:arity name-token)))
                                                     (report-error name-token "Expected a parameter name"))
-                                                  (let [w3b (advance (reserve w3a name-token)) 
+                                                  (let [w3b (advance (define w3a name-token)) 
                                                         params (conj parameters name-token)]
                                                     (if (= "," (:id (:token w3b)))
                                                       (recur (advance w3b ",") params)
