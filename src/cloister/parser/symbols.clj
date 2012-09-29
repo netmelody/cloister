@@ -1,7 +1,7 @@
 (ns cloister.parser.symbols
   (:use [cloister.parser.util :only [report-error]])
   (:use [cloister.parser.scope :only [scope-find scope-reserve scope-create-child]])
-  (:use [cloister.parser.traversal :only [advance extract-expression extract-statements]]))
+  (:use [cloister.parser.traversal :only [advance extract-expression extract-statements extract-assignment]]))
 
 (defn- reserve [world token] (assoc world :scope (scope-reserve (:scope world) token)))
 
@@ -10,7 +10,7 @@
    :value nil
    :null-denotation (fn [world identity-token] (report-error identity-token "Undefined.") [world nil])
    :left-denotation (fn [world identity-token left] (report-error identity-token "Missing operator.") [world nil])
-   ;:statement-denotation (fn [world identity-token] (report-error (:token world) "Undefined.") [world nil])
+   :statement-denotation nil
    :left-binding-power 0
    :right-binding-power 0})
 
@@ -53,14 +53,7 @@
       (assoc table id (assoc existing-symbol :left-binding-power (max (:left-binding-power symbol) (:left-binding-power existing-symbol))))
       (assoc table id symbol))))
 
-(defn- extract-assignment [world name-token]
-  (let [token (:token world)]
-    (if (= "=" (:id token))
-      (let [[new-world expr] (extract-expression (advance world "=") 0)
-            assignment (assoc token :first name-token :second expr :arity :binary)]
-        [new-world assignment])
-      [world nil])))
-
+; kill me?
 (defn- one-or-many [arr]
   (let [len (count arr)]
     (cond (= 0 len) nil (= 1 len) (arr 0) (> 1 len) arr)))

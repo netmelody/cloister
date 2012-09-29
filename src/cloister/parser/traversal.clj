@@ -52,3 +52,11 @@
 (defn extract-block [world]
   (let [std (:statement-denotation (:token world))]
     (std (advance world (:token world) "{"))))
+
+(defn extract-assignment [world name-token]
+  (let [token (:token world)]
+    (if (= "=" (:id token))
+      (let [[new-world expr] (extract-expression (advance world "=") 0)
+            assignment (assoc token :first name-token :second expr :arity :binary)]
+        [new-world assignment])
+      [world nil])))
