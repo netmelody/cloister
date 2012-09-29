@@ -29,6 +29,7 @@
   (let [nud (:null-denotation (:token world))]
     (if (nil? nud) (report-error (:token world) "Missing null denotation"))
     (loop [[w left] (nud (advance world) (:token world))]
+      (if (nil? (:left-binding-power (:token w))) (report-error (:token w) "Missing left binding power"))
       (if (>= right-binding-power (:left-binding-power (:token w)))
         [w left]
         (recur ((:left-denotation (:token w)) (advance w) (:token w) left))))))

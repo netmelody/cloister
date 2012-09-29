@@ -71,6 +71,14 @@
                             (let [this (assoc identity-token :arity :this)]
                               [(reserve world this) this]))))
 
+(def ^{:private true} _dot
+  (assoc (make-symbol "." 80)
+         :left-denotation (fn [world identity-token left]
+                            (let [token (:token world)]
+                              (if (not (= :name (:arity token)))
+                                (report-error token "Expected a property name."))
+                              [(advance world) (assoc identity-token :first left :second (assoc token :arity :literal) :arity :binary)]))))
+
 (def ^{:private true} _open-parens
   (assoc (make-symbol "(" 80)
          :left-denotation (fn [world identity-token left]
@@ -98,7 +106,18 @@
 (def ^{:private true} _open-curly
   (assoc (make-symbol "{")
          :null-denotation (fn [world identity-token]
-                            (report-error identity-token "nud not yet implemented!"))
+                            (let [[w expressions] (if (= "}" (:id (:token world)))
+                                                    [world []]
+                                                    (loop [w1 world expressions []]
+                                                      (let [name-token (:token w1)]
+                                                        (if (and (not (= :name (:arity name-token))) (not (= :literal (:arity name-token))))
+                                                          (report-error name-token "Bad property name"))
+                                                        (let [[w2 expr] (extract-expression (advance (advance w1) ":") 0)
+                                                              exprs (conj expressions (assoc expr :key (:value name-token)))]
+                                                          (if (= "," (:id (:token w2)))
+                                                            (recur (advance w2 ",") exprs)
+                                                            [w2 exprs])))))]
+                              [(advance w "}") (assoc identity-token :first expressions :arity :unary)]))
          :statement-denotation (fn [world identity-token]
                                  (report-error identity-token "std not yet implemented!"))))
 
@@ -178,6 +197,7 @@
                          (register-symbol (make-infixr "-"   50))
                          (register-symbol (make-infixr "*"   60))
                          (register-symbol (make-infixr "/"   60))
+                         (register-symbol _dot)
                          (register-symbol _open-parens)
                          (register-symbol _open-square)
                          (register-symbol _open-curly)

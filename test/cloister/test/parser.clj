@@ -74,3 +74,30 @@
                                  {:from 29 :to 30 :type :operator :value ";"}
                                  {:from 31 :to 32 :type :operator :value "}"}
                                  {:from 32 :to 33 :type :operator :value ";"}]))))
+
+; var j = {"foo": 1}.foo;
+(deftest parses-object-access
+  (is (= [{:value "="
+           :arity :binary
+           :first  {:value "j" :arity :name}
+           :second {:value "."
+                    :arity :binary
+                    :first {:value "{"
+                            :arity :unary
+                            :first [{:key "foo" :value 1 :arity :literal}]}
+                    :second {:value "foo" :arity :literal}}}]
+         (cloister.parser/parse [{:from 0  :to 3  :type :name     :value "var"}
+                                 {:from 4  :to 5  :type :name     :value "j"  }
+                                 {:from 6  :to 7  :type :operator :value "="  }
+                                 {:from 8  :to 9  :type :operator :value "{"  }
+                                 {:from 9  :to 14 :type :string   :value "foo"}
+                                 {:from 14 :to 15 :type :operator :value ":"  }
+                                 {:from 16 :to 17 :type :number   :value 1    }
+                                 {:from 17 :to 18 :type :operator :value "}"  }
+                                 {:from 18 :to 19 :type :operator :value "."  }
+                                 {:from 19 :to 22 :type :name     :value "foo"}
+                                 {:from 22 :to 23 :type :operator :value ";"  }]))))
+
+;function with args
+;
+;
