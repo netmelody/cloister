@@ -16,7 +16,7 @@
       (report-error token "Unexpected token"))
     (symbol-find world :end)))
 
-(defn advance 
+(defn advance
   ([world] (advance world nil))
   ([world expected-token-id]
     (if (and expected-token-id (not (= (:id (:token world)) expected-token-id)))
@@ -42,7 +42,7 @@
 
 (defn extract-statements [world]
   (loop [w world statements []]
-    (if (or (= :end (:id (:token w))) (= "{" (:id (:token w))))
+    (if (or (= :end (:id (:token w))) (= "}" (:id (:token w))))
       [w statements]
       (let [[new-world statement] (extract-statement w)]
         (recur new-world (conj statements statement))))))
