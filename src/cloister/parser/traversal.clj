@@ -52,7 +52,7 @@
 
 (defn extract-block [world]
   (let [std (:statement-denotation (:token world))]
-    (std (advance world (:token world) "{"))))
+    (std (advance world "{"))))
 
 (defn extract-assignment [world name-token]
   (let [token (:token world)]

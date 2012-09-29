@@ -98,6 +98,45 @@
                                  {:from 19 :to 22 :type :name     :value "foo"}
                                  {:from 22 :to 23 :type :operator :value ";"  }]))))
 
-;function with args
-;
-;
+; var k = function(a) { if (a) {return 1;} else {return 2;} };
+(deftest parses-func-with-args-and-if-statement
+  (is (= [{:value "="
+           :arity :binary
+           :first {:value "k" :arity :name}
+           :second {:value "function"
+                    :arity :function
+                    :first [{:value "a" :arity :name}]
+                    :second {:value "if"
+                             :arity :statement
+                             :first {:value "a" :arity :name}
+                             :second {:value "return"
+                                      :arity :statement
+                                      :first {:value 1 :arity :literal}}
+                             :third {:value "return"
+                                     :arity :statement
+                                     :first {:value 2 :arity :literal}}}}}]
+         (cloister.parser/parse [{:from 0  :to 3  :type :name     :value "var"      }
+                                 {:from 4  :to 5  :type :name     :value "k"        }
+                                 {:from 6  :to 7  :type :operator :value "="        }
+                                 {:from 8  :to 16 :type :name     :value "function" }
+                                 {:from 16 :to 17 :type :operator :value "("        }
+                                 {:from 17 :to 18 :type :name     :value "a"        }
+                                 {:from 18 :to 19 :type :operator :value ")"        }
+                                 {:from 20 :to 21 :type :operator :value "{"        }
+                                 {:from 22 :to 24 :type :name     :value "if"       }
+                                 {:from 25 :to 26 :type :operator :value "("        }
+                                 {:from 26 :to 27 :type :name     :value "a"        }
+                                 {:from 27 :to 28 :type :operator :value ")"        }
+                                 {:from 29 :to 30 :type :operator :value "{"        }
+                                 {:from 30 :to 36 :type :name     :value "return"   }
+                                 {:from 37 :to 38 :type :number   :value 1          }
+                                 {:from 38 :to 39 :type :operator :value ";"        }
+                                 {:from 39 :to 40 :type :operator :value "}"        }
+                                 {:from 41 :to 45 :type :name     :value "else"     }
+                                 {:from 46 :to 47 :type :operator :value "{"        }
+                                 {:from 47 :to 53 :type :name     :value "return"   }
+                                 {:from 54 :to 55 :type :number   :value 2          }
+                                 {:from 55 :to 56 :type :operator :value ";"        }
+                                 {:from 56 :to 57 :type :operator :value "}"        }
+                                 {:from 58 :to 59 :type :operator :value "}"        }
+                                 {:from 59 :to 60 :type :operator :value ";"        }]))))

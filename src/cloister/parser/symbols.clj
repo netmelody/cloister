@@ -1,7 +1,7 @@
 (ns cloister.parser.symbols
   (:use [cloister.parser.util :only [report-error]])
   (:use [cloister.parser.scope :only [scope-find scope-reserve scope-create-child]])
-  (:use [cloister.parser.traversal :only [advance extract-expression extract-statements extract-assignment]]))
+  (:use [cloister.parser.traversal :only [advance extract-expression extract-statement extract-statements extract-assignment extract-block]]))
 
 (defn- reserve [world token] (assoc world :scope (scope-reserve (:scope world) token)))
 
@@ -141,6 +141,18 @@
                                            (recur (advance w2 ",") a2)
                                            [(advance w2 ";") (one-or-many a2)]))))))))
 
+(def ^{:private true} _if
+  (assoc (make-symbol "if")
+         :statement-denotation (fn [world identity-token]
+                                 (let [[w1 first] (extract-expression (advance world "(") 0)
+                                       [w2 second] (extract-block (advance w1 ")"))
+                                       [w3 third] (if (= ("else" (:id (:token w2))))
+                                                    (let [w3a (advance (reserve w2 (:token w2)) "else")]
+                                                      (if (= "if" (:id (:token w3a))) (extract-statement w3a) (extract-block w3a)))
+                                                    [w2 nil])]
+                                   [w3 (assoc identity-token :first first :second second :third third :arity :statement)]))))
+
+
 (def ^{:private true} _return
   (assoc (make-symbol "return")
          :statement-denotation (fn [world identity-token]
@@ -157,11 +169,21 @@
                             (let [token (:token world)
                                   w1 (assoc world :scope (scope-create-child (:scope world)))
                                   [this w2] (if (= :name (:arity token)) [(assoc identity-token :name (:value token)) (advance (reserve w1 token))] [identity-token w1])
-                                  w3 (advance w2 "(")]
-                              ; TODO: parse args here
-                              (let [[w4 statements] (extract-statements (advance (advance w3 ")") "{"))
-                                    w5 (advance w4 "}")]
-                                [(assoc w5 :scope (:parent (:scope w5))) (assoc this :first [] :arity :function :second statements)])))))
+                                  w3 (advance w2 "(")
+                                  [w4 params] (if (= ")" (:id (:token w3)))
+                                              [w3 []]
+                                              (loop [w3a w3 parameters []]
+                                                (let [name-token (:token w3a)]
+                                                  (if (not (= :name (:arity name-token)))
+                                                    (report-error name-token "Expected a parameter name"))
+                                                  (let [w3b (advance (reserve w3a name-token)) 
+                                                        params (conj parameters name-token)]
+                                                    (if (= "," (:id (:token w3b)))
+                                                      (recur (advance w3b ",") params)
+                                                      [w3b params])))))]
+                              (let [[w5 statements] (extract-statements (advance (advance w4 ")") "{"))
+                                    w6 (advance w5 "}")]
+                                [(assoc w6 :scope (:parent (:scope w6))) (assoc this :first [] :arity :function :second statements)])))))
 
 (def base-symbol-table (-> {}
                          (register-symbol (make-symbol :end))
@@ -206,5 +228,5 @@
                          (register-symbol (make-prefix "typeof"))
                          (register-symbol _function)
                          (register-symbol _var)
-;                         (register-symbol _if)
+                         (register-symbol _if)
                          (register-symbol _return)))
