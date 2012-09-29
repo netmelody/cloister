@@ -43,7 +43,7 @@
            :second {:value "function"
                     :arity :function
                     :first []
-                    :second {:value "return" :arity :statement :first {:value 1.0 :arity :literal}}}}]
+                    :second [{:value "return" :arity :statement :first {:value 1.0 :arity :literal}}]}}]
          (cloister.parser/parse [{:from 0  :to 3  :type :name     :value "var"}
                                  {:from 4  :to 5  :type :name     :value "i"}
                                  {:from 6  :to 7  :type :operator :value "="}
@@ -52,7 +52,7 @@
                                  {:from 17 :to 18 :type :operator :value ")"}
                                  {:from 19 :to 20 :type :operator :value "{"}
                                  {:from 21 :to 27 :type :name     :value "return"}
-                                 {:from 28 :to 29 :type :number   :value 1}
+                                 {:from 28 :to 29 :type :number   :value 1.0}
                                  {:from 29 :to 30 :type :operator :value ";"}
                                  {:from 31 :to 32 :type :operator :value "}"}
                                  {:from 32 :to 33 :type :operator :value ";"}]))))
